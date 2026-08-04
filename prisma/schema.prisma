@@ -6,9 +6,7 @@ generator client {
 }
 
 datasource db {
-  // Configured to use SQLite by default to run out-of-the-box without manual database setup.
-  // To switch to PostgreSQL, change provider to "postgresql" and set DATABASE_URL in .env to a postgres connection string.
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
