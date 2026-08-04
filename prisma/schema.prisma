@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Configured to use SQLite by default to run out-of-the-box without manual database setup.
+  // To switch to PostgreSQL, change provider to "postgresql" and set DATABASE_URL in .env to a postgres connection string.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("MANAGER") // ADMIN, MANAGER, CONTENT_MANAGER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Car {
+  id             String   @id @default(uuid())
+  make           String   // e.g. BMW, Mercedes-Benz, Porsche
+  model          String   // e.g. M3, E-Class, 911
+  price          Int      // In USD
+  year           Int
+  mileage        Int      // In km
+  engine         String   // e.g. "2.0 бензин", "3.0 дизель", "Electric"
+  transmission   String   // e.g. "Автомат", "Механіка"
+  drive          String   // e.g. "Повний привід", "Задній привід", "Передній привід"
+  body           String   // e.g. "Седан", "Кросовер", "Купе"
+  color          String   // e.g. "Чорний", "Білий"
+  owners         Int      @default(1)
+  status         String   @default("IN_STOCK") // IN_STOCK, BOOKED, SOLD
+  images         String   // JSON stringified array of image URLs
+  videoUrl       String?
+  description    String
+  specs          String   // JSON details: engineVol, power, speed, consumption, etc.
+  equipment      String   // JSON array of equipment options: climate, leather, etc.
+  serviceHistory String   // JSON array of service events
+  isNew          Boolean  @default(false)
+  views          Int      @default(0)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  type      String   // TRADE_IN, BUYBACK, BOOKING, CONTACT
+  name      String
+  phone     String
+  details   String   // JSON string details (e.g. VIN, trade-in car specs, booking car ID)
+  status    String   @default("NEW") // NEW, IN_PROGRESS, COMPLETED, REJECTED
+  comments  String   @default("[]") // JSON comments array
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  name      String
+  rating    Int
+  comment   String
+  status    String   @default("APPROVED") // APPROVED, PENDING, REJECTED
+  createdAt DateTime @default(now())
+}
+
+model Article {
+  id        String   @id @default(uuid())
+  title     String
+  slug      String   @unique
+  content   String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Banner {
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String?
+  image     String
+  link      String?
+  createdAt DateTime @default(now())
+}

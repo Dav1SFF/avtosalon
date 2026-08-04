@@ -1,0 +1,481 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
+interface Car {
+  id: string;
+  make: string;
+  model: string;
+  price: number;
+  year: number;
+  mileage: number;
+  engine: string;
+  transmission: string;
+  drive: string;
+  body: string;
+  color: string;
+  status: string;
+  images: string;
+  description: string;
+  specs: string;
+  equipment: string;
+}
+
+export default function AdminCarsPage() {
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form Drawer Modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCarId, setEditingCarId] = useState<string | null>(null);
+
+  // Form Fields State
+  const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
+  const [price, setPrice] = useState("");
+  const [year, setYear] = useState("");
+  const [mileage, setMileage] = useState("");
+  const [engine, setEngine] = useState("2.0 бензин");
+  const [transmission, setTransmission] = useState("Автомат");
+  const [drive, setDrive] = useState("Повний привід");
+  const [body, setBody] = useState("Седан");
+  const [color, setColor] = useState("");
+  const [description, setDescription] = useState("");
+  const [imageUrls, setImageUrls] = useState("");
+  const [status, setStatus] = useState("IN_STOCK");
+
+  // Specs Sub-fields
+  const [engineVol, setEngineVol] = useState("");
+  const [power, setPower] = useState("");
+  const [acceleration, setAcceleration] = useState("");
+  const [maxSpeed, setMaxSpeed] = useState("");
+  const [consumption, setConsumption] = useState("");
+
+  // Equipment List
+  const [eqText, setEqText] = useState("");
+
+  const fetchCars = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/cars?limit=100");
+      const data = await res.json();
+      if (data.cars) {
+        setCars(data.cars);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCars();
+  }, []);
+
+  const handleEditClick = (car: Car) => {
+    setEditingCarId(car.id);
+    setMake(car.make);
+    setModel(car.model);
+    setPrice(car.price.toString());
+    setYear(car.year.toString());
+    setMileage(car.mileage.toString());
+    setEngine(car.engine);
+    setTransmission(car.transmission);
+    setDrive(car.drive);
+    setBody(car.body);
+    setColor(car.color);
+    setDescription(car.description);
+    setStatus(car.status);
+    
+    // Parse JSON images
+    try {
+      const parsedImages = JSON.parse(car.images);
+      setImageUrls(parsedImages.join(", "));
+    } catch (e) {
+      setImageUrls("");
+    }
+
+    // Parse JSON specs
+    try {
+      const parsedSpecs = JSON.parse(car.specs);
+      setEngineVol(parsedSpecs.engineVol || "");
+      setPower(parsedSpecs.power || "");
+      setAcceleration(parsedSpecs.acceleration || "");
+      setMaxSpeed(parsedSpecs.maxSpeed || "");
+      setConsumption(parsedSpecs.consumption || "");
+    } catch (e) {
+      setEngineVol("");
+      setPower("");
+      setAcceleration("");
+      setMaxSpeed("");
+      setConsumption("");
+    }
+
+    // Parse JSON equipment
+    try {
+      const parsedEquipment = JSON.parse(car.equipment);
+      setEqText(parsedEquipment.join(", "));
+    } catch (e) {
+      setEqText("");
+    }
+
+    setModalOpen(true);
+  };
+
+  const handleCreateClick = () => {
+    setEditingCarId(null);
+    setMake("");
+    setModel("");
+    setPrice("");
+    setYear("");
+    setMileage("");
+    setEngine("2.0 бензин");
+    setTransmission("Автомат");
+    setDrive("Повний привід");
+    setBody("Седан");
+    setColor("");
+    setDescription("");
+    setImageUrls("https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800");
+    setStatus("IN_STOCK");
+    
+    setEngineVol("1998 см³");
+    setPower("258 к.с.");
+    setAcceleration("5.8 с");
+    setMaxSpeed("250 км/год");
+    setConsumption("7.2 л/100км");
+    
+    setEqText("Шкіряний салон, Камера 360, Адаптивний круїз");
+    setModalOpen(true);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const parsedImages = imageUrls
+      .split(",")
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0);
+
+    const parsedSpecs = {
+      engineVol,
+      power,
+      acceleration,
+      maxSpeed,
+      consumption,
+    };
+
+    const parsedEquipment = eqText
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+
+    const payload = {
+      make,
+      model,
+      price,
+      year,
+      mileage,
+      engine,
+      transmission,
+      drive,
+      body,
+      color,
+      description,
+      images: parsedImages,
+      specs: parsedSpecs,
+      equipment: parsedEquipment,
+      serviceHistory: [], // Seeding default empty or keeping existing
+      status,
+    };
+
+    try {
+      const url = editingCarId ? `/api/cars/${editingCarId}` : "/api/cars";
+      const method = editingCarId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        setModalOpen(false);
+        fetchCars();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCar = async (carId: string) => {
+    if (!confirm("Ви впевнені, що хочете видалити цей автомобіль?")) return;
+    try {
+      const res = await fetch(`/api/cars/${carId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchCars();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStatusChange = async (carId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/cars/${carId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        fetchCars();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="space-y-10">
+      <div className="flex justify-between items-center">
+        <div>
+          <span className="text-xs font-bold text-brand uppercase tracking-wider">Керування автопарком</span>
+          <h1 className="text-3xl font-extrabold text-white mt-1 uppercase">Автомобілі</h1>
+        </div>
+        <button
+          onClick={handleCreateClick}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl bg-brand text-background font-bold text-xs uppercase tracking-wider hover:bg-brand-hover transition shadow-lg"
+        >
+          <Plus className="w-4 h-4" />
+          Додати автомобіль
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <RefreshCw className="w-10 h-10 text-brand animate-spin" />
+        </div>
+      ) : cars.length === 0 ? (
+        <div className="glass p-16 rounded-[24px] border border-white/5 text-center text-text-gray">
+          Немає доданих автомобілів. Натисніть кнопку вище, щоб додати перше авто.
+        </div>
+      ) : (
+        <div className="glass rounded-[24px] border border-white/5 overflow-hidden shadow-2xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 bg-black/10 text-xs text-text-gray uppercase tracking-wider font-semibold">
+                  <th className="p-5">Автомобіль</th>
+                  <th className="p-5">Рік / Пробіг</th>
+                  <th className="p-5">Ціна</th>
+                  <th className="p-5">Статус на сайті</th>
+                  <th className="p-5 text-right">Дії</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {cars.map((car) => {
+                  const imgs = JSON.parse(car.images);
+                  return (
+                    <tr key={car.id} className="hover:bg-white/1">
+                      <td className="p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-16 aspect-[16/10] rounded-lg overflow-hidden shrink-0 bg-black/40">
+                            <Image src={imgs[0]} alt={car.model} fill className="object-cover" />
+                          </div>
+                          <div>
+                            <span className="block text-white font-bold text-sm leading-snug">{car.make} {car.model}</span>
+                            <span className="block text-[10px] text-text-gray/50 font-semibold uppercase mt-0.5">{car.engine}  •  {car.transmission}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-5">
+                        <span className="block text-white font-semibold">{car.year} р.</span>
+                        <span className="block text-xs text-text-gray">{(car.mileage / 1000).toFixed(0)} тис. км</span>
+                      </td>
+                      <td className="p-5">
+                        <span className="text-brand font-bold text-base">{car.price.toLocaleString("uk-UA")} $</span>
+                      </td>
+                      <td className="p-5">
+                        <select
+                          value={car.status}
+                          onChange={(e) => handleStatusChange(car.id, e.target.value)}
+                          className="premium-input py-1 px-3 text-xs bg-black/20 border-white/5 font-semibold appearance-none"
+                        >
+                          <option value="IN_STOCK">В наявності</option>
+                          <option value="BOOKED">Заброньовано</option>
+                          <option value="SOLD">Продано</option>
+                        </select>
+                      </td>
+                      <td className="p-5 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/catalog/${car.id}`}
+                            target="_blank"
+                            className="p-2.5 rounded-lg bg-white/5 hover:bg-brand hover:text-background text-white transition"
+                            title="Переглянути на сайті"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => handleEditClick(car)}
+                            className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
+                            title="Редагувати"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCar(car.id)}
+                            className="p-2.5 rounded-lg bg-white/5 hover:bg-red-500/10 text-red-400 transition"
+                            title="Видалити"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Creation/Editing sliding drawer modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-xs">
+          <div className="bg-[#0E2A24] border-l border-white/5 w-full max-w-2xl h-screen flex flex-col justify-between p-8 overflow-y-auto animate-slideLeft">
+            
+            <div>
+              <div className="flex justify-between items-center pb-6 border-b border-white/5 mb-6">
+                <h3 className="text-white font-extrabold text-xl uppercase tracking-wide">
+                  {editingCarId ? "Редагувати автомобіль" : "Додати автомобіль"}
+                </h3>
+                <button onClick={() => setModalOpen(false)} className="text-text-gray hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                {/* Brand & Model */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Марка</label>
+                    <input type="text" required placeholder="BMW" value={make} onChange={(e) => setMake(e.target.value)} className="w-full premium-input" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Модель</label>
+                    <input type="text" required placeholder="M3" value={model} onChange={(e) => setModel(e.target.value)} className="w-full premium-input" />
+                  </div>
+                </div>
+
+                {/* Price, Year, Mileage */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Ціна, $</label>
+                    <input type="number" required placeholder="34000" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full premium-input text-center" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Рік</label>
+                    <input type="number" required placeholder="2022" value={year} onChange={(e) => setYear(e.target.value)} className="w-full premium-input text-center" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Пробіг, км</label>
+                    <input type="number" required placeholder="26000" value={mileage} onChange={(e) => setMileage(e.target.value)} className="w-full premium-input text-center" />
+                  </div>
+                </div>
+
+                {/* Engine, Transmission, Drive, Body, Color */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Двигун</label>
+                    <input type="text" value={engine} onChange={(e) => setEngine(e.target.value)} className="w-full premium-input" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Колір</label>
+                    <input type="text" placeholder="Білий" value={color} onChange={(e) => setColor(e.target.value)} className="w-full premium-input" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Коробка</label>
+                    <select value={transmission} onChange={(e) => setTransmission(e.target.value)} className="w-full premium-input appearance-none">
+                      <option value="Автомат">Автомат</option>
+                      <option value="Механіка">Механіка</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Привід</label>
+                    <select value={drive} onChange={(e) => setDrive(e.target.value)} className="w-full premium-input appearance-none">
+                      <option value="Повний привід">Повний привід</option>
+                      <option value="Передній привід">Передній привід</option>
+                      <option value="Задній привід">Задній привід</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Кузов</label>
+                    <select value={body} onChange={(e) => setBody(e.target.value)} className="w-full premium-input appearance-none">
+                      <option value="Седан">Седан</option>
+                      <option value="Кросовер">Кросовер</option>
+                      <option value="Купе">Купе</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Images */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Зображення (URL-адреси через кому)</label>
+                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" />
+                </div>
+
+                {/* Specs JSON Details */}
+                <div className="border-t border-white/5 pt-4">
+                  <span className="block text-white font-bold text-xs uppercase tracking-wider mb-3">Специфікації (Характеристики)</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input type="text" placeholder="Об'єм: 1998 см³" value={engineVol} onChange={(e) => setEngineVol(e.target.value)} className="premium-input text-xs" />
+                    <input type="text" placeholder="Потужність: 258 к.с." value={power} onChange={(e) => setPower(e.target.value)} className="premium-input text-xs" />
+                    <input type="text" placeholder="Розгін: 5.8 с" value={acceleration} onChange={(e) => setAcceleration(e.target.value)} className="premium-input text-xs" />
+                    <input type="text" placeholder="Витрата: 7.2 л/100км" value={consumption} onChange={(e) => setConsumption(e.target.value)} className="premium-input text-xs" />
+                  </div>
+                </div>
+
+                {/* Equipment (comma separated) */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Комплектація (через кому)</label>
+                  <input type="text" value={eqText} onChange={(e) => setEqText(e.target.value)} className="w-full premium-input" />
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
+                  <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none" />
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-4 bg-brand hover:bg-brand-hover text-background text-sm font-bold uppercase tracking-wider rounded-xl transition"
+                  >
+                    {submitting ? "Збереження..." : "Зберегти автомобіль"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

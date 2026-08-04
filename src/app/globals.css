@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", sans-serif;
+
+  --color-background: #071E1A;
+  --color-foreground: #F5F5F5;
+  --color-card: #0E2A24;
+  --color-brand: #FFD400;
+  --color-brand-hover: #E6BE00;
+  --color-text-white: #F5F5F5;
+  --color-text-gray: #A8B0AF;
+  --color-border-custom: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.12);
+
+  --radius-custom: 24px;
+
+  --animate-fadeIn: fadeIn 0.4s ease forwards;
+  --animate-slideLeft: slideLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+:root {
+  --background: #071E1A;
+  --foreground: #F5F5F5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.animate-slideLeft {
+  animation: slideLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+body {
+  background-color: #071E1A;
+  color: #F5F5F5;
+  font-family: "Manrope", sans-serif;
+  overflow-x: hidden;
+}
+
+/* Selection */
+::selection {
+  background: #FFD400;
+  color: #071E1A;
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #071E1A;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(14, 42, 36, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Premium input styling */
+.premium-input {
+  background-color: rgba(14, 42, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: #F5F5F5;
+  padding: 12px 16px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.premium-input:focus {
+  outline: none;
+  border-color: #FFD400;
+  box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.1);
+  background-color: rgba(14, 42, 36, 0.9);
+}
+
+.premium-input::placeholder {
+  color: rgba(168, 176, 175, 0.5);
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Range input styling */
+input[type="range"] {
+  accent-color: #FFD400;
+}
+
+/* Select option styling */
+select option {
+  background: #0E2A24;
+  color: #F5F5F5;
+}
