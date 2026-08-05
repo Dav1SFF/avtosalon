@@ -135,15 +135,21 @@ export default function AdminCarsPage() {
     
     // Parse JSON images
     try {
-      const parsedImages = JSON.parse(car.images);
-      setImageUrls(parsedImages.join(", "));
+      if (typeof car.images === 'string' && car.images.trim().startsWith('[')) {
+        const parsedImages = JSON.parse(car.images);
+        setImageUrls(Array.isArray(parsedImages) ? parsedImages.join(", ") : car.images);
+      } else {
+        setImageUrls(car.images || "");
+      }
     } catch (e) {
-      setImageUrls("");
+      setImageUrls(typeof car.images === 'string' ? car.images : "");
     }
 
     // Parse JSON specs
     try {
-      const parsedSpecs = JSON.parse(car.specs);
+      const parsedSpecs = typeof car.specs === 'string' && car.specs.trim().startsWith('{') 
+        ? JSON.parse(car.specs) 
+        : {};
       setEngineVol(parsedSpecs.engineVol || "");
       setPower(parsedSpecs.power || "");
       setAcceleration(parsedSpecs.acceleration || "");
@@ -159,16 +165,24 @@ export default function AdminCarsPage() {
 
     // Parse JSON equipment
     try {
-      const parsedEquipment = JSON.parse(car.equipment);
-      setEqText(parsedEquipment.join(", "));
+      if (typeof car.equipment === 'string' && car.equipment.trim().startsWith('[')) {
+        const parsedEquipment = JSON.parse(car.equipment);
+        setEqText(Array.isArray(parsedEquipment) ? parsedEquipment.join(", ") : car.equipment);
+      } else {
+        setEqText(car.equipment || "");
+      }
     } catch (e) {
-      setEqText("");
+      setEqText(typeof car.equipment === 'string' ? car.equipment : "");
     }
 
     // Parse JSON service history
     try {
-      const parsedHistory = JSON.parse(car.serviceHistory || "[]");
-      setServiceHistory(parsedHistory);
+      if (typeof car.serviceHistory === 'string' && car.serviceHistory.trim().startsWith('[')) {
+        const parsedHistory = JSON.parse(car.serviceHistory);
+        setServiceHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
+      } else {
+        setServiceHistory([]);
+      }
     } catch (e) {
       setServiceHistory([]);
     }
