@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 160" width="1000" height="320">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&amp;display=swap');
+      .brand { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 64px; fill: #FFD400; letter-spacing: 0.05em; }
+      .tagline { font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 16px; fill: #A8B0AF; letter-spacing: 0.25em; text-transform: uppercase; }
+    </style>
+  </defs>
+  
+  <text x="40" y="85" class="brand">VIDKRYTYI</text>
+  <text x="42" y="125" class="tagline">ВІДКРИТО ПРО АВТОМОБІЛІ</text>
+</svg>
