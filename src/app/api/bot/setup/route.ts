@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  let botToken = process.env.TELEGRAM_BOT_TOKEN;
+  
+  if (botToken) {
+    botToken = botToken.replace(/["']/g, "").trim();
+  }
   
   if (!botToken) {
     return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN is not set" }, { status: 400 });
