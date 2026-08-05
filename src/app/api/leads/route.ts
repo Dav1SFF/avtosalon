@@ -22,8 +22,6 @@ export async function POST(request: Request) {
     if (!type || !name || !phone) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
-    // Save Lead to DB
     const lead = await prisma.lead.create({
       data: {
         type,
@@ -70,7 +68,14 @@ export async function POST(request: Request) {
     }
 
     // Trigger notification
-    await sendTelegramMessage(telegramText);
+    await sendTelegramMessage(telegramText, {
+      inline_keyboard: [
+        [
+          { text: "🟢 Взяти в роботу", callback_data: `lead_progress_${lead.id}` },
+          { text: "🔴 Відхилити", callback_data: `lead_reject_${lead.id}` }
+        ]
+      ]
+    });
 
     return NextResponse.json({ success: true, lead });
   } catch (error: any) {

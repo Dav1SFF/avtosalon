@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer, Sparkles, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer, Sparkles, Search, Smartphone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -451,6 +451,14 @@ export default function AdminCarsPage() {
                             title="Переглянути на сайті"
                           >
                             <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            href={`/admin/story/${car.id}`}
+                            target="_blank"
+                            className="p-2.5 rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-500 text-white transition hover:scale-105 shadow-lg"
+                            title="Instagram Story"
+                          >
+                            <Smartphone className="w-4 h-4" />
                           </Link>
                           <Link
                             href={`/admin/print/${car.id}`}
