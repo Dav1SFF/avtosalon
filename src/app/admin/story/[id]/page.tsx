@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { toPng } from "html-to-image";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ArrowLeft, Share } from "lucide-react";
 
 interface Car {
   make: string;
@@ -24,7 +25,22 @@ export default function StoryGeneratorPage() {
   const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [scale, setScale] = useState(1);
   const storyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 1080) {
+        setScale((width - 40) / 1080);
+      } else {
+        setScale(1);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/cars/${id}`)
@@ -40,6 +56,23 @@ export default function StoryGeneratorPage() {
     setGenerating(true);
     try {
       const dataUrl = await toPng(storyRef.current, { cacheBust: true, quality: 1, pixelRatio: 2 });
+      
+      // Try native share for mobile (direct save to gallery support)
+      try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], `story-${car?.make}-${car?.model}.png`, { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Instagram Story',
+          });
+          return; // Share successful, exit
+        }
+      } catch (shareErr) {
+        console.log("Native share failed, falling back to download", shareErr);
+      }
+
+      // Fallback for desktop
       const link = document.createElement("a");
       link.download = `story-${car?.make}-${car?.model}.png`;
       link.href = dataUrl;
@@ -62,28 +95,44 @@ export default function StoryGeneratorPage() {
   } catch(e) {}
 
   return (
-    <div className="min-h-screen bg-[#0E2A24] flex flex-col items-center py-10 overflow-auto">
-      <div className="flex justify-between items-center w-full max-w-[1080px] px-8 mb-8">
+    <div className="min-h-screen bg-[#0E2A24] flex flex-col items-center py-6 overflow-x-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full max-w-[1080px] px-4 md:px-8 mb-6 gap-4">
         <div>
-          <h1 className="text-white text-3xl font-extrabold uppercase">Instagram Story</h1>
-          <p className="text-text-gray mt-2 text-sm">Генератор макету (1080x1920)</p>
+          <Link href="/admin/cars" className="inline-flex items-center gap-2 text-brand hover:text-white transition font-bold mb-4">
+            <ArrowLeft className="w-5 h-5" /> Назад
+          </Link>
+          <h1 className="text-white text-2xl md:text-3xl font-extrabold uppercase">Instagram Story</h1>
+          <p className="text-text-gray mt-1 text-xs md:text-sm">Генератор макету</p>
         </div>
         <button
           onClick={handleDownload}
           disabled={generating}
-          className="flex items-center gap-3 bg-brand hover:bg-brand-hover text-background px-8 py-4 rounded-2xl font-bold uppercase tracking-wider transition disabled:opacity-50"
+          className="w-full md:w-auto flex justify-center items-center gap-3 bg-brand hover:bg-brand-hover text-background px-8 py-4 rounded-2xl font-bold uppercase tracking-wider transition disabled:opacity-50"
         >
-          {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-          {generating ? "Генерація..." : "Завантажити Story"}
+          {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share className="w-5 h-5" />}
+          {generating ? "Генерація..." : "Зберегти / Поділитися"}
         </button>
       </div>
 
-      {/* 1080x1920 Container for export */}
+      {/* Wrapper to handle scaling without layout breakage */}
       <div 
-        ref={storyRef}
-        style={{ width: '1080px', height: '1920px' }} 
-        className="relative bg-[#071E1A] overflow-hidden shrink-0 shadow-2xl shadow-black/50"
+        style={{ 
+          height: `${1920 * scale}px`, 
+          width: `${1080 * scale}px`,
+        }}
+        className="relative flex justify-center items-start mb-10"
       >
+        {/* 1080x1920 Container for export */}
+        <div 
+          ref={storyRef}
+          style={{ 
+            width: '1080px', 
+            height: '1920px',
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left'
+          }} 
+          className="absolute top-0 left-0 bg-[#071E1A] overflow-hidden shrink-0 shadow-2xl shadow-black/50"
+        >
         {/* Background Image with Gradient Overlay */}
         <div className="absolute inset-0">
           <Image src={firstImg} alt="Car" fill className="object-cover object-center opacity-80" unoptimized />
