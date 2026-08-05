@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -378,6 +378,14 @@ export default function AdminCarsPage() {
                             title="Переглянути на сайті"
                           >
                             <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            href={`/admin/print/${car.id}`}
+                            target="_blank"
+                            className="p-2.5 rounded-lg bg-white/5 hover:bg-green-500/10 text-green-400 transition"
+                            title="Друк цінника"
+                          >
+                            <Printer className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => handleEditClick(car)}
