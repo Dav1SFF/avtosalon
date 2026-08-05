@@ -74,7 +74,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
   else if (sortBy === "mileageAsc") orderBy = { mileage: "asc" };
 
   // Run DB counts and fetch
-  const [cars, total] = await Promise.all([
+  const [cars, total, makesData, bodiesData, transmissionsData] = await Promise.all([
     prisma.car.findMany({
       where,
       orderBy,
@@ -82,7 +82,14 @@ export default async function CatalogPage({ searchParams }: PageProps) {
       take: limit,
     }),
     prisma.car.count({ where }),
+    prisma.car.findMany({ select: { make: true }, distinct: ["make"], where: { status: { not: "PENDING" } } }),
+    prisma.car.findMany({ select: { body: true }, distinct: ["body"], where: { status: { not: "PENDING" } } }),
+    prisma.car.findMany({ select: { transmission: true }, distinct: ["transmission"], where: { status: { not: "PENDING" } } }),
   ]);
+
+  const uniqueMakes = makesData.map(m => m.make).filter(Boolean);
+  const uniqueBodies = bodiesData.map(b => b.body).filter(Boolean);
+  const uniqueTransmissions = transmissionsData.map(t => t.transmission).filter(Boolean);
 
   // Convert schema objects to simple JSON serializable structures
   const serializedCars = cars.map((car) => ({
@@ -119,6 +126,9 @@ export default async function CatalogPage({ searchParams }: PageProps) {
             initialTotal={total}
             initialPages={Math.ceil(total / limit)}
             initialPage={page}
+            uniqueMakes={uniqueMakes}
+            uniqueBodies={uniqueBodies}
+            uniqueTransmissions={uniqueTransmissions}
           />
         </div>
       </div>

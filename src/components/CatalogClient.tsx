@@ -30,6 +30,9 @@ interface CatalogClientProps {
   initialTotal: number;
   initialPages: number;
   initialPage: number;
+  uniqueMakes?: string[];
+  uniqueBodies?: string[];
+  uniqueTransmissions?: string[];
 }
 
 export default function CatalogClient({
@@ -37,6 +40,9 @@ export default function CatalogClient({
   initialTotal,
   initialPages,
   initialPage,
+  uniqueMakes = [],
+  uniqueBodies = [],
+  uniqueTransmissions = [],
 }: CatalogClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,10 +68,10 @@ export default function CatalogClient({
   const [body, setBody] = useState(searchParams.get("body") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "createdAt");
 
-  const makes = ["BMW", "Volkswagen", "Alfa Romeo", "Infiniti", "Porsche"];
-  const transmissions = ["Автомат", "Механіка"];
+  const makes = uniqueMakes.length > 0 ? uniqueMakes : ["BMW", "Volkswagen", "Alfa Romeo", "Infiniti", "Porsche"];
+  const transmissions = uniqueTransmissions.length > 0 ? uniqueTransmissions : ["Автомат", "Механіка"];
   const engines = ["бензин", "дизель", "Електро", "hybrid"];
-  const bodies = ["Седан", "Кросовер", "Купе", "Хетчбек"];
+  const bodies = uniqueBodies.length > 0 ? uniqueBodies : ["Седан", "Кросовер", "Купе", "Хетчбек"];
 
   const fetchFilteredCars = async (pageToFetch = 1) => {
     setLoading(true);
