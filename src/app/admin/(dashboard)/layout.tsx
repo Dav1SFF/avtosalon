@@ -1,21 +1,28 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Car, PhoneCall, Settings, LogOut, User, RefreshCw } from "lucide-react";
+import { LayoutDashboard, Car, PhoneCall, Settings, LogOut, User, RefreshCw, Menu, X } from "lucide-react";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/admin/login");
     }
   }, [status, router]);
+
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   if (status === "loading") {
     return (
@@ -40,9 +47,37 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   };
 
   return (
-    <div className="min-h-screen flex bg-[#071E1A] font-sans text-foreground selection:bg-brand selection:text-background">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#071E1A] font-sans text-foreground selection:bg-brand selection:text-background relative">
+      
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-[#0E2A24] border-b border-white/5 sticky top-0 z-40">
+        <Link href="/" className="block">
+          <span className="text-xl font-extrabold tracking-wider text-brand block leading-none">
+            VIDKRYTYI
+          </span>
+          <span className="text-[8px] uppercase tracking-[0.2em] text-text-gray block mt-0.5 font-semibold">
+            Адмін-панель
+          </span>
+        </Link>
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white p-2 bg-white/5 rounded-lg border border-white/10">
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Admin Sidebar */}
-      <aside className="w-64 bg-[#0E2A24] border-r border-white/5 flex flex-col justify-between p-6 shrink-0 h-screen sticky top-0">
+      <aside className={`
+        fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#0E2A24] border-r border-white/5 flex flex-col justify-between p-6 shrink-0 
+        transform transition-transform duration-300 ease-in-out md:translate-x-0
+        ${mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+      `}>
         
         {/* Branding header */}
         <div className="space-y-8">
@@ -110,7 +145,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       </aside>
 
       {/* Main dashboard content */}
-      <main className="flex-grow p-10 overflow-y-auto max-h-screen">
+      <main className="flex-grow p-4 sm:p-6 md:p-10 overflow-y-auto max-h-screen">
         {children}
       </main>
 
