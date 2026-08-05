@@ -143,7 +143,7 @@ export default function StoryGeneratorPage() {
         >
         {/* Background Image with Gradient Overlay */}
         <div className="absolute inset-0">
-          <img src={firstImg} alt="Car" className="w-full h-full object-cover object-center opacity-80" crossOrigin="anonymous" />
+          <img src={`/api/proxy-image?url=${encodeURIComponent(firstImg)}`} alt="Car" className="w-full h-full object-cover object-center opacity-80" crossOrigin="anonymous" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#071E1A] via-[#071E1A]/80 to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent"></div>
         </div>
