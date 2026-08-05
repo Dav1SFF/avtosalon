@@ -20,9 +20,22 @@ export async function GET(request: Request) {
       const make = result.Make;
       const model = result.Model;
       const year = parseInt(result.ModelYear) || null;
-      const body = result.BodyClass;
+      let body = "Седан";
+      if (result.BodyClass) {
+        const b = result.BodyClass.toLowerCase();
+        if (b.includes("sport utility") || b.includes("suv") || b.includes("mpv") || b.includes("crossover")) body = "Кросовер";
+        else if (b.includes("sedan")) body = "Седан";
+        else if (b.includes("coupe")) body = "Купе";
+        else if (b.includes("hatchback")) body = "Хетчбек";
+        else if (b.includes("wagon")) body = "Універсал";
+        else if (b.includes("truck") || b.includes("pickup")) body = "Пікап";
+      }
+
       const engine = result.DisplacementL ? `${parseFloat(result.DisplacementL).toFixed(1)} ${result.FuelTypePrimary === "Diesel" ? "дизель" : "бензин"}` : "";
       
+      const engineVol = result.DisplacementCC ? `${parseFloat(result.DisplacementCC).toFixed(0)} см³` : "";
+      const power = result.EngineHP ? `${parseFloat(result.EngineHP).toFixed(0)} к.с.` : (result.EngineKW ? `${(parseFloat(result.EngineKW) * 1.35962).toFixed(0)} к.с.` : "");
+
       let drive = "";
       if (result.DriveType) {
         const dType = result.DriveType.toLowerCase();
@@ -38,6 +51,8 @@ export async function GET(request: Request) {
         body,
         engine,
         drive,
+        engineVol,
+        power,
         raw: result // send raw data just in case frontend needs more
       });
     }
