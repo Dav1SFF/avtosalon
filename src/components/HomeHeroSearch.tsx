@@ -4,13 +4,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronDown } from "lucide-react";
 
-export default function HomeHeroSearch() {
+export default function HomeHeroSearch({ uniqueMakes = [] }: { uniqueMakes?: string[] }) {
   const router = useRouter();
   const [make, setMake] = useState("");
   const [minYear, setMinYear] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  const makes = ["BMW", "Volkswagen", "Alfa Romeo", "Infiniti", "Porsche"];
+  const makes = uniqueMakes.length > 0 ? uniqueMakes : ["BMW", "Volkswagen", "Alfa Romeo", "Infiniti", "Porsche"];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

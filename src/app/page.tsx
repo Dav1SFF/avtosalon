@@ -22,6 +22,14 @@ export default async function HomePage() {
     take: 3,
   });
 
+  // Fetch unique makes for filter
+  const distinctCars = await prisma.car.findMany({
+    where: { status: { not: "PENDING" } },
+    select: { make: true },
+    distinct: ["make"],
+  });
+  const uniqueMakes = distinctCars.map(c => c.make).filter(Boolean).sort();
+
   return (
     <PublicLayout>
       {/* 1. Hero Section */}
@@ -106,7 +114,7 @@ export default async function HomePage() {
 
       {/* Hero Quick Search Bar overlay */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
-        <HomeHeroSearch />
+        <HomeHeroSearch uniqueMakes={uniqueMakes} />
       </div>
 
       {/* 2. Feature highlights / Badges */}
