@@ -42,7 +42,9 @@ export default async function CatalogPage({ searchParams }: PageProps) {
   const skip = (page - 1) * limit;
 
   // Build Prisma filter
-  const where: any = {};
+  const where: any = {
+    status: { not: "PENDING" }
+  };
   if (make && make !== "all") where.make = { equals: make };
   if (model) where.model = { contains: model };
   if (transmission && transmission !== "all") where.transmission = { equals: transmission };

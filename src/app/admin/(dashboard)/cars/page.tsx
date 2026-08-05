@@ -61,7 +61,7 @@ export default function AdminCarsPage() {
   const fetchCars = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/cars?limit=100");
+      const res = await fetch("/api/cars?limit=100&includePending=true");
       const data = await res.json();
       if (data.cars) {
         setCars(data.cars);
@@ -282,13 +282,17 @@ export default function AdminCarsPage() {
               </thead>
               <tbody className="divide-y divide-white/5 text-sm">
                 {cars.map((car) => {
-                  const imgs = JSON.parse(car.images);
+                  let imgs = [];
+                  try {
+                    imgs = typeof car.images === 'string' ? JSON.parse(car.images) : car.images;
+                  } catch(e) {}
+                  const firstImg = (imgs && imgs.length > 0) ? imgs[0] : "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800";
                   return (
-                    <tr key={car.id} className="hover:bg-white/1">
+                    <tr key={car.id} className={`hover:bg-white/1 ${car.status === 'PENDING' ? 'bg-orange-500/5' : ''}`}>
                       <td className="p-5">
                         <div className="flex items-center gap-4">
                           <div className="relative w-16 aspect-[16/10] rounded-lg overflow-hidden shrink-0 bg-black/40">
-                            <Image src={imgs[0]} alt={car.model} fill className="object-cover" />
+                            <Image src={firstImg} alt={car.model || "Car"} fill className="object-cover" />
                           </div>
                           <div>
                             <span className="block text-white font-bold text-sm leading-snug">{car.make} {car.model}</span>
@@ -307,8 +311,9 @@ export default function AdminCarsPage() {
                         <select
                           value={car.status}
                           onChange={(e) => handleStatusChange(car.id, e.target.value)}
-                          className="premium-input py-1 px-3 text-xs bg-black/20 border-white/5 font-semibold appearance-none"
+                          className={`premium-input py-1 px-3 text-xs border-white/5 font-semibold appearance-none ${car.status === 'PENDING' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-black/20'}`}
                         >
+                          <option value="PENDING">Очікує підтвердження</option>
                           <option value="IN_STOCK">В наявності</option>
                           <option value="BOOKED">Заброньовано</option>
                           <option value="SOLD">Продано</option>

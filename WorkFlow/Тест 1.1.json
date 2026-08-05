@@ -1,0 +1,81 @@
+{
+  "name": "Log Event",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "event_type"
+            },
+            {
+              "name": "chat_id"
+            },
+            {
+              "name": "details"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "15a6cdf2-e44d-4be2-9d03-aeee17477a1b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003845518172",
+        "text": "={{ \"🔔 \" + $json.event_type + \"\\nchat_id: \" + $json.chat_id + \"\\n\" + $json.details }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8d8fcfe5-7a3a-4675-976c-cfe62c7750e7",
+      "name": "Send a text message",
+      "webhookId": "a29c2a78-37a1-42ab-9abb-cfab37e34c91",
+      "credentials": {
+        "telegramApi": {
+          "id": "gCTirdRHteAU0SDt",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0f0999ea-184b-4569-9da8-ed77b1fc0dc3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "20caa4780be231ac8201f57c67931ccd0ea5d29b47ab74acd476983736fb277a"
+  },
+  "nodeGroups": [],
+  "id": "uQL6MQlpB5q4C1qh",
+  "tags": []
+}

@@ -25,7 +25,12 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "8");
     const skip = (page - 1) * limit;
 
+    const includePending = searchParams.get("includePending") === "true";
+
     const where: any = {};
+    if (!includePending) {
+      where.status = { not: "PENDING" };
+    }
 
     if (make && make !== "all") where.make = { equals: make };
     if (model) where.model = { contains: model };
