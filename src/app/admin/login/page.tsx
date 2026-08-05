@@ -65,12 +65,12 @@ export default function AdminLoginPage() {
             
             {/* Email input */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Електронна пошта</label>
+              <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Логін / Email</label>
               <div className="relative">
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="admin@vidkrytyi.com.ua"
+                  placeholder="Ваш логін"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full premium-input pl-11"
