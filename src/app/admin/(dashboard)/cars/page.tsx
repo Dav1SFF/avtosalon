@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer, Sparkles, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -65,6 +65,11 @@ export default function AdminCarsPage() {
   // Image Upload State
   const [uploadingImages, setUploadingImages] = useState(false);
 
+  // AI & VIN States
+  const [vinInput, setVinInput] = useState("");
+  const [isDecodingVin, setIsDecodingVin] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     
@@ -96,6 +101,57 @@ export default function AdminCarsPage() {
       alert("Помилка завантаження фото");
     } finally {
       setUploadingImages(false);
+    }
+  };
+
+  const handleDecodeVIN = async () => {
+    if (!vinInput || vinInput.length !== 17) {
+      alert("VIN код має бути довжиною 17 символів");
+      return;
+    }
+    setIsDecodingVin(true);
+    try {
+      const res = await fetch(`/api/admin/decode-vin?vin=${vinInput}`);
+      const data = await res.json();
+      if (res.ok) {
+        if (data.make) setMake(data.make);
+        if (data.model) setModel(data.model);
+        if (data.year) setYear(data.year.toString());
+        if (data.body) setBody(data.body);
+        if (data.engine) setEngine(data.engine);
+        if (data.drive) setDrive(data.drive);
+      } else {
+        alert(data.error || "Не вдалося розшифрувати VIN");
+      }
+    } catch (e) {
+      alert("Помилка мережі при розшифровці");
+    } finally {
+      setIsDecodingVin(false);
+    }
+  };
+
+  const handleGenerateAI = async () => {
+    if (!make || !model) {
+      alert("Спочатку вкажіть хоча б Марку та Модель авто!");
+      return;
+    }
+    setIsGeneratingAI(true);
+    try {
+      const res = await fetch("/api/admin/generate-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ make, model, year, mileage, engine, transmission, body })
+      });
+      const data = await res.json();
+      if (res.ok && data.description) {
+        setDescription(data.description);
+      } else {
+        alert("Не вдалося згенерувати опис");
+      }
+    } catch (e) {
+      alert("Помилка генерації");
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -442,6 +498,19 @@ export default function AdminCarsPage() {
               </div>
 
               <form onSubmit={handleFormSubmit} className="space-y-6">
+                {/* VIN Decoder */}
+                <div className="flex flex-col gap-1.5 p-4 bg-brand/5 border border-brand/20 rounded-[16px]">
+                  <label className="text-xs text-brand uppercase tracking-wider font-extrabold flex items-center gap-1">
+                    <Search className="w-3.5 h-3.5" /> Автозаповнення по VIN
+                  </label>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Введіть 17 символів VIN-коду..." value={vinInput} onChange={(e) => setVinInput(e.target.value.toUpperCase())} className="flex-grow premium-input uppercase" maxLength={17} />
+                    <button type="button" onClick={handleDecodeVIN} disabled={isDecodingVin} className="px-4 py-2 bg-brand text-background font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-brand-hover transition disabled:opacity-50 whitespace-nowrap">
+                      {isDecodingVin ? "Пошук..." : "Розшифрувати"}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Brand & Model */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
@@ -570,8 +639,13 @@ export default function AdminCarsPage() {
 
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
-                  <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none" />
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
+                    <button type="button" onClick={handleGenerateAI} disabled={isGeneratingAI} className="text-brand text-xs font-bold uppercase flex items-center gap-1 hover:underline disabled:opacity-50 transition">
+                      <Sparkles className="w-3.5 h-3.5" /> {isGeneratingAI ? "Генерую..." : "Згенерувати AI"}
+                    </button>
+                  </div>
+                  <textarea rows={8} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none" placeholder="Введіть опис або натисніть Згенерувати AI..." />
                 </div>
 
                 <div className="pt-6">
