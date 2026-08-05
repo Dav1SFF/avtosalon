@@ -557,6 +557,8 @@ export default function AdminCarsPage() {
                     <select value={transmission} onChange={(e) => setTransmission(e.target.value)} className="w-full premium-input appearance-none">
                       <option value="Автомат">Автомат</option>
                       <option value="Механіка">Механіка</option>
+                      <option value="Варіатор">Варіатор</option>
+                      <option value="Робот">Робот</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
