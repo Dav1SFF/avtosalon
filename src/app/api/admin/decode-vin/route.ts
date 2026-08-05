@@ -44,6 +44,15 @@ export async function GET(request: Request) {
         else if (dType.includes("fwd") || dType.includes("front")) drive = "Передній привід";
       }
 
+      let transmission = "";
+      if (result.TransmissionStyle) {
+        const t = result.TransmissionStyle.toLowerCase();
+        if (t.includes("continuously variable") || t.includes("cvt")) transmission = "Варіатор";
+        else if (t.includes("manual")) transmission = "Механіка";
+        else if (t.includes("automated manual") || t.includes("dual clutch") || t.includes("dct") || t.includes("robot")) transmission = "Робот";
+        else if (t.includes("auto")) transmission = "Автомат";
+      }
+
       return NextResponse.json({
         make,
         model,
@@ -51,6 +60,7 @@ export async function GET(request: Request) {
         body,
         engine,
         drive,
+        transmission,
         engineVol,
         power,
         raw: result // send raw data just in case frontend needs more

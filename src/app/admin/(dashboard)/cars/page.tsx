@@ -120,6 +120,7 @@ export default function AdminCarsPage() {
         if (data.body) setBody(data.body);
         if (data.engine) setEngine(data.engine);
         if (data.drive) setDrive(data.drive);
+        if (data.transmission) setTransmission(data.transmission);
         if (data.engineVol) setEngineVol(data.engineVol);
         if (data.power) setPower(data.power);
       } else {
