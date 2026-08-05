@@ -62,6 +62,43 @@ export default function AdminCarsPage() {
   // Service History
   const [serviceHistory, setServiceHistory] = useState<{ date: string; mileage: number; type: string; note: string }[]>([]);
 
+  // Image Upload State
+  const [uploadingImages, setUploadingImages] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    
+    setUploadingImages(true);
+    const files = Array.from(e.target.files);
+    const newUrls: string[] = [];
+
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("image", file);
+        
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        const data = await res.json();
+        if (data.url) {
+          newUrls.push(data.url);
+        }
+      }
+
+      if (newUrls.length > 0) {
+        setImageUrls(prev => prev ? `${prev}, ${newUrls.join(", ")}` : newUrls.join(", "));
+      }
+    } catch (err) {
+      console.error("Upload error", err);
+      alert("Помилка завантаження фото");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const fetchCars = async () => {
     setLoading(true);
     try {
@@ -451,8 +488,14 @@ export default function AdminCarsPage() {
 
                 {/* Images */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Зображення (URL-адреси через кому)</label>
-                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" />
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Зображення (URL-адреси або Завантаження)</label>
+                    <label className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition ${uploadingImages ? 'text-text-gray cursor-wait' : 'text-brand hover:underline'}`}>
+                      {uploadingImages ? "Завантаження..." : "+ Вибрати файли"}
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingImages} />
+                    </label>
+                  </div>
+                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" placeholder="https://..., https://..." />
                 </div>
 
                 {/* Specs JSON Details */}
