@@ -5,6 +5,22 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+export async function GET(request: Request, { params }: Props) {
+  try {
+    const { id } = await params;
+    const car = await prisma.car.findUnique({ where: { id } });
+    
+    if (!car) {
+      return NextResponse.json({ error: "Car not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ car });
+  } catch (error: any) {
+    console.error("GET Car Error:", error);
+    return NextResponse.json({ error: "Failed to fetch car" }, { status: 500 });
+  }
+}
+
 export async function PUT(request: Request, { params }: Props) {
   try {
     const { id } = await params;
