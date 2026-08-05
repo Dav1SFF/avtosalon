@@ -189,6 +189,7 @@ export default function StoryGeneratorPage() {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
