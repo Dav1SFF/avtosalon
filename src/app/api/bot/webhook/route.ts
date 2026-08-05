@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    let botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (botToken) botToken = botToken.replace(/["']/g, "").trim();
 
     // Handle Callback Queries (when a user clicks an inline button)
     if (body.callback_query) {
