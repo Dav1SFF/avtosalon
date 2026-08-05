@@ -22,6 +22,7 @@ interface Car {
   description: string;
   specs: string;
   equipment: string;
+  serviceHistory: string;
 }
 
 export default function AdminCarsPage() {
@@ -57,6 +58,9 @@ export default function AdminCarsPage() {
 
   // Equipment List
   const [eqText, setEqText] = useState("");
+
+  // Service History
+  const [serviceHistory, setServiceHistory] = useState<{ date: string; mileage: number; type: string; note: string }[]>([]);
 
   const fetchCars = async () => {
     setLoading(true);
@@ -124,6 +128,14 @@ export default function AdminCarsPage() {
       setEqText("");
     }
 
+    // Parse JSON service history
+    try {
+      const parsedHistory = JSON.parse(car.serviceHistory || "[]");
+      setServiceHistory(parsedHistory);
+    } catch (e) {
+      setServiceHistory([]);
+    }
+
     setModalOpen(true);
   };
 
@@ -150,6 +162,7 @@ export default function AdminCarsPage() {
     setConsumption("7.2 л/100км");
     
     setEqText("Шкіряний салон, Камера 360, Адаптивний круїз");
+    setServiceHistory([]);
     setModalOpen(true);
   };
 
@@ -190,7 +203,7 @@ export default function AdminCarsPage() {
       images: parsedImages,
       specs: parsedSpecs,
       equipment: parsedEquipment,
-      serviceHistory: [], // Seeding default empty or keeping existing
+      serviceHistory,
       status,
     };
 
@@ -457,6 +470,37 @@ export default function AdminCarsPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Комплектація (через кому)</label>
                   <input type="text" value={eqText} onChange={(e) => setEqText(e.target.value)} className="w-full premium-input" />
+                </div>
+
+                {/* Service History */}
+                <div className="border-t border-white/5 pt-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="block text-white font-bold text-xs uppercase tracking-wider">Історія обслуговування</span>
+                    <button
+                      type="button"
+                      onClick={() => setServiceHistory([...serviceHistory, { date: "", mileage: 0, type: "", note: "" }])}
+                      className="text-brand text-xs font-bold hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Додати запис
+                    </button>
+                  </div>
+                  {serviceHistory.map((sh, idx) => (
+                    <div key={idx} className="p-4 bg-white/5 rounded-xl border border-white/10 relative space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setServiceHistory(serviceHistory.filter((_, i) => i !== idx))}
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" placeholder="Дата (напр. 15.08.2024)" value={sh.date} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].date = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
+                        <input type="number" placeholder="Пробіг (напр. 120000)" value={sh.mileage || ""} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].mileage = parseInt(e.target.value) || 0; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
+                        <input type="text" placeholder="Тип робіт (ТО, Ремонт)" value={sh.type} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].type = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
+                        <input type="text" placeholder="Опис робіт (заміна масла...)" value={sh.note} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].note = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Description */}
