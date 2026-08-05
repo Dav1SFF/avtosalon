@@ -55,7 +55,15 @@ export default function StoryGeneratorPage() {
     if (!storyRef.current) return;
     setGenerating(true);
     try {
-      const dataUrl = await toPng(storyRef.current, { cacheBust: true, quality: 1, pixelRatio: 2 });
+      const dataUrl = await toPng(storyRef.current, { 
+        cacheBust: true, 
+        quality: 1, 
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
+      });
       
       // Try native share for mobile (direct save to gallery support)
       try {
@@ -135,7 +143,7 @@ export default function StoryGeneratorPage() {
         >
         {/* Background Image with Gradient Overlay */}
         <div className="absolute inset-0">
-          <Image src={firstImg} alt="Car" fill className="object-cover object-center opacity-80" unoptimized />
+          <img src={firstImg} alt="Car" className="w-full h-full object-cover object-center opacity-80" crossOrigin="anonymous" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#071E1A] via-[#071E1A]/80 to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent"></div>
         </div>
