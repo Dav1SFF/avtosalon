@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     if (data.success) {
       return NextResponse.json({ url: data.data.url });
     } else {
-      return NextResponse.json({ error: 'ImgBB upload failed' }, { status: 500 });
+      console.error('ImgBB error:', data);
+      return NextResponse.json({ error: 'ImgBB upload failed', details: data }, { status: 400 });
     }
   } catch (error) {
     console.error('Upload Error:', error);

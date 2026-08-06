@@ -79,28 +79,42 @@ export default function AdminCarsPage() {
 
     try {
       for (const file of files) {
-        const formData = new FormData();
-        formData.append("image", file);
-        
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        
-        const data = await res.json();
-        if (data.url) {
-          newUrls.push(data.url);
+        try {
+          const formData = new FormData();
+          formData.append("image", file);
+          
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          
+          if (!res.ok) {
+            console.error(`Upload failed for ${file.name}: ${res.statusText}`);
+            continue;
+          }
+          
+          const data = await res.json();
+          if (data.url) {
+            newUrls.push(data.url);
+          }
+        } catch (innerErr) {
+          console.error(`Error uploading ${file.name}:`, innerErr);
         }
       }
 
       if (newUrls.length > 0) {
         setImageUrls(prev => prev ? `${prev}, ${newUrls.join(", ")}` : newUrls.join(", "));
       }
+      
+      if (newUrls.length < files.length) {
+        alert(`Завантажено ${newUrls.length} з ${files.length} фото. Деякі файли могли бути занадто великими (ліміт сервера).`);
+      }
     } catch (err) {
       console.error("Upload error", err);
       alert("Помилка завантаження фото");
     } finally {
       setUploadingImages(false);
+      e.target.value = '';
     }
   };
 
