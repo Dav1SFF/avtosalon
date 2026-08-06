@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, GitCompare, Phone, Send, Calendar, Check, Compass, Star, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Heart, GitCompare, Phone, Send, Calendar, Check, Star, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 interface Car {
@@ -42,9 +42,7 @@ export default function CarDetailsClient({ car, similarCars }: CarDetailsClientP
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   
-  // 360 rotation states
-  const [is360Mode, setIs360Mode] = useState(false);
-  const [rotationIdx, setRotationIdx] = useState(0);
+
 
   // Booking Modal States
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -96,84 +94,27 @@ export default function CarDetailsClient({ car, similarCars }: CarDetailsClientP
         {/* Left Side: Images */}
         <div className="lg:col-span-7 space-y-4">
           <div className="relative aspect-[16/10] w-full rounded-[24px] overflow-hidden border border-white/5 bg-black/40 group">
-            
-            {/* 360 View Simulator Overlay */}
-            {is360Mode ? (
-              <div className="absolute inset-0 flex flex-col justify-between p-6 z-10 bg-black/10">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs uppercase font-extrabold text-brand bg-background/80 px-3 py-1 rounded-md border border-white/5 flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 animate-spin" />
-                    360° Віртуальний огляд
-                  </span>
-                  <button
-                    onClick={() => setIs360Mode(false)}
-                    className="p-1.5 rounded-lg bg-black/60 hover:bg-brand hover:text-background text-white font-bold transition"
-                  >
-                    Вийти
-                  </button>
-                </div>
-                <div className="w-full text-center">
-                  <Image
-                    src={images[rotationIdx] || images[0]}
-                    alt="360 view"
-                    fill
-                    className="object-cover pointer-events-none"
-                  />
-                  <div className="absolute bottom-6 left-6 right-6 glass p-4 rounded-xl border border-white/5 flex flex-col gap-2">
-                    <label className="text-[10px] uppercase font-bold text-text-gray tracking-widest text-center">
-                      Проведіть слайдер для обертання автомобіля
-                    </label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={images.length - 1}
-                      value={rotationIdx}
-                      onChange={(e) => setRotationIdx(parseInt(e.target.value))}
-                      className="w-full accent-brand bg-white/10 rounded-lg cursor-pointer h-1.5"
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <Image
-                  src={images[activeImageIdx]}
-                  alt={`${car.make} ${car.model}`}
-                  fill
-                  className="object-cover cursor-zoom-in"
-                  onClick={() => setLightboxOpen(true)}
-                />
-                
-                {/* Control Overlay */}
-                <div className="absolute top-4 left-4 z-10 flex gap-2">
-                  <button
-                    onClick={() => setIs360Mode(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-brand hover:text-background text-white text-xs font-bold uppercase rounded-lg border border-white/5 transition"
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>360° Огляд</span>
-                  </button>
-                </div>
-              </>
-            )}
+            <Image
+              src={images[activeImageIdx]}
+              alt={`${car.make} ${car.model}`}
+              fill
+              className="object-cover cursor-zoom-in"
+              onClick={() => setLightboxOpen(true)}
+            />
 
             {/* Absolute navigation icons */}
-            {!is360Mode && (
-              <>
-                <button
-                  onClick={() => setActiveImageIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-black/40 text-white hover:bg-black/60 transition"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setActiveImageIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-black/40 text-white hover:bg-black/60 transition"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => setActiveImageIdx((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-black/40 text-white hover:bg-black/60 transition"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setActiveImageIdx((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-black/40 text-white hover:bg-black/60 transition"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Thumbnail strip */}
@@ -181,12 +122,9 @@ export default function CarDetailsClient({ car, similarCars }: CarDetailsClientP
             {images.map((img: string, idx: number) => (
               <button
                 key={idx}
-                onClick={() => {
-                  setIs360Mode(false);
-                  setActiveImageIdx(idx);
-                }}
+                onClick={() => setActiveImageIdx(idx)}
                 className={`relative aspect-[16/10] w-24 shrink-0 rounded-xl overflow-hidden border-2 transition ${
-                  activeImageIdx === idx && !is360Mode ? "border-brand" : "border-transparent opacity-60 hover:opacity-100"
+                  activeImageIdx === idx ? "border-brand" : "border-transparent opacity-60 hover:opacity-100"
                 }`}
               >
                 <Image src={img} alt="Thumbnail" fill className="object-cover" />
