@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X } from "lucide-react";
+import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X, Trash2, Edit2 } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -23,6 +23,11 @@ export default function AdminLeadsPage() {
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const [commentText, setCommentText] = useState("");
+
+  // Edit Modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -75,6 +80,38 @@ export default function AdminLeadsPage() {
       if (res.ok) {
         setCommentText("");
         setCommentModalOpen(false);
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    if (!window.confirm("Ви впевнені, що хочете видалити цю заявку?")) return;
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeLead) return;
+    try {
+      const res = await fetch(`/api/leads/${activeLead.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, phone: editPhone }),
+      });
+      if (res.ok) {
+        setEditModalOpen(false);
         fetchLeads();
       }
     } catch (err) {
@@ -170,6 +207,25 @@ export default function AdminLeadsPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-white font-extrabold text-lg">{lead.name}</span>
                     <span className="text-text-gray font-mono text-sm">{lead.phone}</span>
+                    <button 
+                      onClick={() => {
+                        setActiveLead(lead);
+                        setEditName(lead.name);
+                        setEditPhone(lead.phone);
+                        setEditModalOpen(true);
+                      }}
+                      className="ml-2 p-1.5 rounded bg-white/5 hover:bg-white/10 text-text-gray hover:text-white transition"
+                      title="Редагувати"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteLead(lead.id)}
+                      className="p-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                      title="Видалити"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -303,6 +359,53 @@ export default function AdminLeadsPage() {
                 className="w-full py-3.5 bg-brand hover:bg-brand-hover text-background font-bold text-xs uppercase tracking-wider rounded-xl transition"
               >
                 Зберегти коментар
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Lead dialog modal */}
+      {editModalOpen && activeLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="glass p-8 rounded-[24px] border border-white/5 max-w-md w-full relative space-y-6">
+            <button onClick={() => setEditModalOpen(false)} className="absolute top-4 right-4 text-text-gray hover:text-white">
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="text-center">
+              <h3 className="text-white font-extrabold text-lg uppercase tracking-wide">Редагувати заявку</h3>
+              <p className="text-xs text-text-gray mt-1">Оновіть контактні дані</p>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] text-text-gray uppercase tracking-wider font-bold">Ім'я</label>
+                <input
+                  required
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full premium-input text-sm"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-[10px] text-text-gray uppercase tracking-wider font-bold">Телефон</label>
+                <input
+                  required
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full premium-input text-sm font-mono"
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full py-3.5 bg-brand hover:bg-brand-hover text-background font-bold text-xs uppercase tracking-wider rounded-xl transition mt-2"
+              >
+                Зберегти зміни
               </button>
             </form>
           </div>

@@ -9,7 +9,7 @@ export async function PUT(request: Request, { params }: Props) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, comment } = body;
+    const { status, comment, name, phone, details } = body;
 
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) {
@@ -19,6 +19,15 @@ export async function PUT(request: Request, { params }: Props) {
     const data: any = {};
     if (status !== undefined) {
       data.status = status;
+    }
+    if (name !== undefined) {
+      data.name = name;
+    }
+    if (phone !== undefined) {
+      data.phone = phone;
+    }
+    if (details !== undefined) {
+      data.details = details;
     }
 
     if (comment !== undefined) {
@@ -39,5 +48,16 @@ export async function PUT(request: Request, { params }: Props) {
   } catch (error: any) {
     console.error("PUT Lead CRM Error:", error);
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, { params }: Props) {
+  try {
+    const { id } = await params;
+    await prisma.lead.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("DELETE Lead CRM Error:", error);
+    return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
   }
 }
