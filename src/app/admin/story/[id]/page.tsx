@@ -65,26 +65,31 @@ export default function StoryGeneratorPage() {
         }
       });
       
-      // Try native share for mobile (direct save to gallery support)
-      try {
-        const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], `story-${car?.make}-${car?.model}.png`, { type: blob.type });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Instagram Story',
-          });
-          return; // Share successful, exit
+      // Try native share for mobile ONLY (direct save to gallery support)
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `story-${car?.make}-${car?.model}.png`, { type: blob.type });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Instagram Story',
+            });
+            return; // Share successful, exit
+          }
+        } catch (shareErr) {
+          console.log("Native share failed, falling back to download", shareErr);
         }
-      } catch (shareErr) {
-        console.log("Native share failed, falling back to download", shareErr);
       }
 
-      // Fallback for desktop
+      // Fallback for desktop (or if mobile share fails)
       const link = document.createElement("a");
       link.download = `story-${car?.make}-${car?.model}.png`;
       link.href = dataUrl;
+      document.body.appendChild(link); // required for some browsers
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error("Failed to generate image", err);
       alert("Не вдалося згенерувати зображення");
