@@ -79,7 +79,7 @@ export async function GET(request: Request) {
         take: limit,
         include: {
           createdByUser: {
-            select: { name: true }
+            select: { name: true, avatar: true }
           }
         }
       }),

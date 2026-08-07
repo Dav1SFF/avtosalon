@@ -27,7 +27,7 @@ interface Car {
   buyPrice?: number | null;
   expenses?: number | null;
   expenseLog?: string | null;
-  createdByUser?: { name: string } | null;
+  createdByUser?: { name: string; avatar?: string } | null;
 }
 
 export default function AdminCarsPage() {
@@ -558,11 +558,6 @@ export default function AdminCarsPage() {
                       <div>
                         <h2 className="text-xl font-extrabold text-white leading-tight">{car.make} {car.model}</h2>
                         <span className="text-xs text-text-gray font-semibold uppercase">{car.engine} • {car.transmission}</span>
-                        {car.createdByUser && (
-                          <span className="block mt-1 text-[10px] text-brand/80 uppercase font-bold tracking-wider">
-                            Додав(ла): {car.createdByUser.name}
-                          </span>
-                        )}
                       </div>
                       <div className="text-right">
                         <span className="block text-2xl font-black text-brand leading-none">{car.price.toLocaleString("uk-UA")} $</span>
@@ -629,6 +624,25 @@ export default function AdminCarsPage() {
                       <Printer className="w-3.5 h-3.5" /> Друк
                     </Link>
                   </div>
+                  
+                  {/* Creator Info */}
+                  {car.createdByUser && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5 mx-auto lg:mx-0">
+                      {car.createdByUser.avatar ? (
+                        <div className="w-5 h-5 rounded-full overflow-hidden border border-brand/30 relative shrink-0">
+                          <Image src={car.createdByUser.avatar} alt={car.createdByUser.name} fill className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center text-[10px] font-bold text-brand border border-brand/30 shrink-0">
+                          {car.createdByUser.name[0]}
+                        </div>
+                      )}
+                      <span className="text-[10px] font-bold text-text-gray uppercase tracking-wider hidden xl:block">
+                        {car.createdByUser.name}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEditClick(car)}
