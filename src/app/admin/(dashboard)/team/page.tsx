@@ -16,6 +16,7 @@ interface UserStat {
   salesCount: number;
   totalBonus: number;
   avatar?: string;
+  telegramId?: string;
 }
 
 export default function TeamPage() {
@@ -32,6 +33,7 @@ export default function TeamPage() {
   const [editCommission, setEditCommission] = useState("");
   const [editRole, setEditRole] = useState("");
   const [editAvatar, setEditAvatar] = useState("");
+  const [editTelegramId, setEditTelegramId] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Creating state
@@ -43,6 +45,7 @@ export default function TeamPage() {
   const [newSalary, setNewSalary] = useState("");
   const [newCommission, setNewCommission] = useState("");
   const [newAvatar, setNewAvatar] = useState("");
+  const [newTelegramId, setNewTelegramId] = useState("");
 
   const fetchTeam = async () => {
     setLoading(true);
@@ -71,7 +74,8 @@ export default function TeamPage() {
           salary: editSalary,
           commissionRate: editCommission,
           role: editRole,
-          avatar: editAvatar
+          avatar: editAvatar,
+          telegramId: editTelegramId || null
         })
       });
       if (res.ok) {
@@ -98,7 +102,8 @@ export default function TeamPage() {
           role: newRole,
           salary: newSalary,
           commissionRate: newCommission,
-          avatar: newAvatar
+          avatar: newAvatar,
+          telegramId: newTelegramId || null
         })
       });
       if (res.ok) {
@@ -109,6 +114,7 @@ export default function TeamPage() {
         setNewSalary("");
         setNewCommission("");
         setNewAvatar("");
+        setNewTelegramId("");
         fetchTeam();
       } else {
         const err = await res.json();
@@ -152,6 +158,7 @@ export default function TeamPage() {
     setEditCommission(user.commissionRate.toString());
     setEditRole(user.role);
     setEditAvatar(user.avatar || "");
+    setEditTelegramId(user.telegramId || "");
   };
 
   return (
@@ -235,6 +242,10 @@ export default function TeamPage() {
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] uppercase text-text-gray font-bold">% від прибутку з продажу</label>
                     <input type="number" value={editCommission} onChange={(e) => setEditCommission(e.target.value)} className="premium-input text-xs" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase text-text-gray font-bold">Telegram ID</label>
+                    <input type="text" value={editTelegramId} onChange={(e) => setEditTelegramId(e.target.value)} className="premium-input text-xs" placeholder="Наприклад, 123456789" />
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] uppercase text-text-gray font-bold">Аватар (URL або Завантажити)</label>
@@ -327,6 +338,11 @@ export default function TeamPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">% від прибутку (бонус)</label>
                 <input type="number" required value={newCommission} onChange={(e) => setNewCommission(e.target.value)} className="premium-input w-full text-white font-bold" placeholder="10" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Telegram ID</label>
+                <input type="text" value={newTelegramId} onChange={(e) => setNewTelegramId(e.target.value)} className="premium-input w-full" placeholder="Наприклад, 123456789" />
               </div>
 
               <div className="flex flex-col gap-1.5">

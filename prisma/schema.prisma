@@ -19,6 +19,7 @@ model User {
   salary         Int      @default(0) // Fixed salary
   commissionRate Float    @default(0) // Percentage of profit
   avatar         String?  // URL of avatar image
+  telegramId     String?  @unique // Telegram User ID
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -51,6 +52,7 @@ model Car {
   expenses       Int?
   expenseLog     String   @default("[]") // JSON array of detailed expenses
   soldById       String?  // References User.id
+  createdById    String?  // References User.id for tracking who added the car via bot/admin
   salePrice      Int?
   soldAt         DateTime?
   source         String?

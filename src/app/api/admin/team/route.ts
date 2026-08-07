@@ -20,6 +20,7 @@ export async function GET(req: Request) {
         salary: true,
         commissionRate: true,
         avatar: true,
+        telegramId: true,
       },
       orderBy: { name: 'asc' }
     });
@@ -99,6 +100,7 @@ export async function PUT(req: Request) {
       email: data.email,
     };
     if (data.avatar !== undefined) updateData.avatar = data.avatar;
+    if (data.telegramId !== undefined) updateData.telegramId = data.telegramId;
     if (data.password) {
       updateData.password = bcrypt.hashSync(data.password, 10);
     }
@@ -140,6 +142,7 @@ export async function POST(req: Request) {
         salary: Number(data.salary) || 0,
         commissionRate: Number(data.commissionRate) || 0,
         avatar: data.avatar || null,
+        telegramId: data.telegramId || null,
       }
     });
 

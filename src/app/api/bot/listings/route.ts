@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -12,6 +13,19 @@ export async function POST(req: Request) {
 
     const data = await req.json();
     console.log("📥 [BOT API] Отримано новий запит від бота:", data);
+
+    const telegramId = data.user_id ? String(data.user_id) : null;
+    let createdById: string | null = null;
+    let user = null;
+
+    if (telegramId) {
+      user = await prisma.user.findUnique({
+        where: { telegramId }
+      });
+      if (user) {
+        createdById = user.id;
+      }
+    }
 
     const newCar = await prisma.car.create({
       data: {
@@ -33,8 +47,19 @@ export async function POST(req: Request) {
         equipment: JSON.stringify(data.equipment || []),
         serviceHistory: JSON.stringify(data.serviceHistory || []),
         status: "PENDING", // PENDING approval status
+        createdById,
       },
     });
+
+    if (createdById && user) {
+      await logActivity({
+        userId: createdById,
+        action: "CREATE_CAR",
+        entityId: newCar.id,
+        entityType: "CAR",
+        details: { carName: `${newCar.make} ${newCar.model}`, source: "Telegram Bot", price: newCar.price }
+      });
+    }
 
     return NextResponse.json({ success: true, car: newCar });
   } catch (error) {
