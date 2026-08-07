@@ -38,6 +38,10 @@ export default function AdminCarsPage() {
   // Form Drawer Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCarId, setEditingCarId] = useState<string | null>(null);
+  
+  // Search and Sort
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
 
   // Session & Role
   const { data: session } = useSession();
@@ -193,7 +197,7 @@ export default function AdminCarsPage() {
   const fetchCars = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/cars?limit=100&includePending=true");
+      const res = await fetch(`/api/cars?limit=100&includePending=true&search=${encodeURIComponent(searchQuery)}&sortBy=${sortBy}`);
       const data = await res.json();
       if (data.cars) {
         setCars(data.cars);
@@ -215,6 +219,9 @@ export default function AdminCarsPage() {
 
   useEffect(() => {
     fetchCars();
+  }, [searchQuery, sortBy]);
+
+  useEffect(() => {
     if (isAdmin) fetchManagers();
   }, [isAdmin]);
 
@@ -457,6 +464,30 @@ export default function AdminCarsPage() {
           <Plus className="w-4 h-4" />
           Додати автомобіль
         </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 bg-white/5 p-4 rounded-[24px] border border-white/5">
+        <div className="flex-1 relative">
+          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-text-gray" />
+          <input 
+            type="text" 
+            placeholder="Пошук за маркою або моделлю..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:outline-none focus:border-brand transition"
+          />
+        </div>
+        <select 
+          value={sortBy} 
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:outline-none focus:border-brand transition sm:w-48"
+        >
+          <option value="createdAt">Нові спочатку</option>
+          <option value="priceDesc">Найдорожчі</option>
+          <option value="priceAsc">Найдешевші</option>
+          <option value="yearDesc">Новий рік</option>
+          <option value="mileageAsc">Менший пробіг</option>
+        </select>
       </div>
 
       {loading ? (
