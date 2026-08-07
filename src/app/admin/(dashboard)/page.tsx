@@ -4,25 +4,42 @@ import AdminChart from "@/components/AdminChart";
 import { Car, PhoneCall, Star, FileText, ArrowUpRight, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
+import DashboardControls from "./DashboardControls";
 
 export const revalidate = 0; // Dynamic view
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams?: { month?: string; year?: string };
+}) {
   const session = await auth();
   const isAdmin = (session?.user as any)?.role === "ADMIN";
+
+  const currentDate = new Date();
+  const month = searchParams?.month ? parseInt(searchParams.month) : currentDate.getMonth() + 1;
+  const year = searchParams?.year ? parseInt(searchParams.year) : currentDate.getFullYear();
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
+  const dateFilter = {
+    gte: startDate,
+    lt: endDate,
+  };
 
   // Query database statistics
   const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount, soldCars, inStockCars, globalExpenses] = await Promise.all([
     prisma.car.count(),
     prisma.lead.count({ where: { status: "NEW" } }),
     prisma.review.count(),
-    prisma.lead.count({ where: { type: "TRADE_IN" } }),
-    prisma.lead.count({ where: { type: "BUYBACK" } }),
-    prisma.lead.count({ where: { type: "BOOKING" } }),
-    prisma.lead.count({ where: { type: "CONTACT" } }),
-    prisma.car.findMany({ where: { status: "SOLD" } }),
+    prisma.lead.count({ where: { type: "TRADE_IN", createdAt: dateFilter } }),
+    prisma.lead.count({ where: { type: "BUYBACK", createdAt: dateFilter } }),
+    prisma.lead.count({ where: { type: "BOOKING", createdAt: dateFilter } }),
+    prisma.lead.count({ where: { type: "CONTACT", createdAt: dateFilter } }),
+    prisma.car.findMany({ where: { status: "SOLD", soldAt: dateFilter } }),
     prisma.car.findMany({ where: { status: "IN_STOCK" } }),
-    prisma.globalExpense.findMany(),
+    prisma.globalExpense.findMany({ where: { date: dateFilter } }),
   ]);
 
   const realizedProfit = soldCars.reduce((acc, car) => {
@@ -42,6 +59,11 @@ export default async function AdminDashboardPage() {
 
   const totalExpensesAmount = globalExpenses.reduce((acc, exp) => acc + exp.amount, 0);
   const netProfit = realizedProfit - totalExpensesAmount;
+
+  const stats = {
+    totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount,
+    totalCapital, expectedProfit, realizedProfit, totalExpensesAmount, netProfit
+  };
 
   // Fetch recent leads
   const recentLeads = await prisma.lead.findMany({
@@ -64,11 +86,13 @@ export default async function AdminDashboardPage() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-fadeIn">
       <div>
         <span className="text-xs font-bold text-brand uppercase tracking-wider">Панель огляду</span>
         <h1 className="text-3xl font-extrabold text-white mt-1 uppercase">Dashboard</h1>
       </div>
+
+      <DashboardControls stats={stats} initialMonth={month} initialYear={year} />
 
       {/* Cards Grid */}
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${isAdmin ? '5' : '4'} gap-6`}>

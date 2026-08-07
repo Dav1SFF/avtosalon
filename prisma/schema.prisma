@@ -108,3 +108,13 @@ model GlobalExpense {
   note      String
   createdAt DateTime @default(now())
 }
+
+model RecurringExpense {
+  id         String   @id @default(uuid())
+  category   String   // e.g. "Оренда", "Інтернет"
+  amount     Int
+  note       String
+  dayOfMonth Int      // 1-31
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}

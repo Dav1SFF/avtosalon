@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { Plus, Trash2, Calendar, FileText, DollarSign, Tag, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Calendar, FileText, DollarSign, Tag, TrendingUp, Download, RefreshCw } from "lucide-react";
 
 interface GlobalExpense {
   id: string;
@@ -11,6 +11,15 @@ interface GlobalExpense {
   amount: number;
   date: string;
   note: string;
+}
+
+interface RecurringExpense {
+  id: string;
+  category: string;
+  amount: number;
+  dayOfMonth: number;
+  note: string;
+  isActive: boolean;
 }
 
 export default function ExpensesPage() {
@@ -24,6 +33,12 @@ export default function ExpensesPage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"history" | "recurring">("history");
+
+  // Recurring states
+  const [recurring, setRecurring] = useState<RecurringExpense[]>([]);
+  const [recModalOpen, setRecModalOpen] = useState(false);
+  const [recDay, setRecDay] = useState(1);
 
   // Filter
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -42,9 +57,22 @@ export default function ExpensesPage() {
     }
   };
 
+  const fetchRecurring = async () => {
+    try {
+      const res = await fetch("/api/admin/expenses/recurring");
+      const data = await res.json();
+      if (Array.isArray(data)) setRecurring(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
-  }, [month, year]);
+    if (activeTab === "recurring") {
+      fetchRecurring();
+    }
+  }, [month, year, activeTab]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +108,68 @@ export default function ExpensesPage() {
     }
   };
 
+  const handleRecSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/expenses/recurring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, amount, dayOfMonth: recDay, note })
+      });
+      if (res.ok) {
+        setRecModalOpen(false);
+        setAmount("");
+        setNote("");
+        fetchRecurring();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRecDelete = async (id: string) => {
+    if (!confirm("Видалити регулярну витрату?")) return;
+    try {
+      await fetch(`/api/admin/expenses/recurring?id=${id}`, { method: "DELETE" });
+      fetchRecurring();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleRecToggle = async (id: string, isActive: boolean) => {
+    try {
+      await fetch("/api/admin/expenses/recurring", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isActive })
+      });
+      fetchRecurring();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  const downloadCSV = () => {
+    const headers = ["Дата", "Категорія", "Коментар", "Сума"];
+    const rows = expenses.map(e => [
+      format(new Date(e.date), "dd.MM.yyyy"),
+      e.category,
+      `"${e.note.replace(/"/g, '""')}"`, // escape quotes
+      e.amount
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `expenses_${month}_${year}.csv`;
+    link.click();
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
@@ -97,21 +186,43 @@ export default function ExpensesPage() {
         </button>
       </div>
 
-      <div className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/5">
-        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="premium-input w-40">
-          {Array.from({length: 12}).map((_, i) => (
-            <option key={i+1} value={i+1}>{format(new Date(2000, i, 1), 'LLLL', {locale: uk})}</option>
-          ))}
-        </select>
-        <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="premium-input w-32">
-          {[2024, 2025, 2026, 2027].map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-        <div className="ml-auto flex items-center gap-2 text-brand font-black text-xl">
-          Всього: ${totalAmount}
-        </div>
+      <div className="flex gap-4 border-b border-white/5 pb-4">
+        <button 
+          onClick={() => setActiveTab("history")} 
+          className={`pb-2 text-sm font-bold tracking-wider uppercase transition border-b-2 ${activeTab === "history" ? "border-brand text-brand" : "border-transparent text-text-gray hover:text-white"}`}
+        >
+          Історія витрат
+        </button>
+        <button 
+          onClick={() => setActiveTab("recurring")} 
+          className={`pb-2 text-sm font-bold tracking-wider uppercase transition border-b-2 ${activeTab === "recurring" ? "border-brand text-brand" : "border-transparent text-text-gray hover:text-white"}`}
+        >
+          Регулярні (Авто)
+        </button>
       </div>
+
+      {activeTab === "history" ? (
+        <>
+          <div className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+            <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="premium-input w-40">
+              {Array.from({length: 12}).map((_, i) => (
+                <option key={i+1} value={i+1}>{format(new Date(2000, i, 1), 'LLLL', {locale: uk})}</option>
+              ))}
+            </select>
+            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="premium-input w-32">
+              {[2024, 2025, 2026, 2027].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            
+            <button onClick={downloadCSV} className="ml-4 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition text-white uppercase tracking-wider">
+              <Download className="w-4 h-4 text-brand" /> Експорт CSV
+            </button>
+
+            <div className="ml-auto flex items-center gap-2 text-brand font-black text-xl">
+              Всього: ${totalAmount}
+            </div>
+          </div>
 
       {loading ? (
         <div className="text-center py-20 text-brand animate-pulse">Завантаження...</div>
@@ -165,6 +276,45 @@ export default function ExpensesPage() {
           </table>
         </div>
       )}
+      </>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center bg-brand/5 p-6 rounded-3xl border border-brand/20">
+            <div>
+              <h2 className="text-xl font-bold text-white mb-1">Регулярні витрати</h2>
+              <p className="text-sm text-text-gray">Ці витрати автоматично списуватимуться кожного вибраного числа місяця.</p>
+            </div>
+            <button onClick={() => setRecModalOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-background rounded-xl font-bold text-sm uppercase">
+              <Plus className="w-4 h-4" /> Додати шаблон
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recurring.map(rec => (
+              <div key={rec.id} className={`p-6 rounded-3xl border transition ${rec.isActive ? 'bg-[#0A1A17] border-white/10' : 'bg-black/40 border-white/5 opacity-60'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 text-xs text-text-gray font-semibold border border-white/10">
+                    <Tag className="w-3 h-3" /> {rec.category}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleRecToggle(rec.id, !rec.isActive)} className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${rec.isActive ? 'text-brand bg-brand/10' : 'text-text-gray bg-white/5'}`}>
+                      {rec.isActive ? 'Активно' : 'Пауза'}
+                    </button>
+                    <button onClick={() => handleRecDelete(rec.id)} className="text-red-500 bg-red-500/10 p-1.5 rounded hover:bg-red-500 hover:text-white">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <div className="text-3xl font-black text-white mb-2">${rec.amount}</div>
+                <div className="text-sm text-text-gray mb-4">{rec.note || "Без коментаря"}</div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-brand bg-brand/5 px-3 py-2 rounded-lg">
+                  <RefreshCw className="w-3 h-3" /> Списується {rec.dayOfMonth}-го числа
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {modalOpen && (
@@ -201,6 +351,52 @@ export default function ExpensesPage() {
 
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase rounded-xl transition">
+                  Скасувати
+                </button>
+                <button type="submit" disabled={submitting} className="flex-1 py-3 bg-brand hover:bg-brand-hover text-background font-bold uppercase rounded-xl transition disabled:opacity-50">
+                  Зберегти
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {recModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0E2A24] w-full max-w-md rounded-3xl p-8 border border-white/10 shadow-2xl animate-scaleIn">
+            <h3 className="text-xl font-black text-white uppercase tracking-wide mb-6">Новий шаблон витрати</h3>
+            
+            <form onSubmit={handleRecSubmit} className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Категорія</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="premium-input w-full">
+                  <option value="Офіс та Оренда">Офіс та Оренда</option>
+                  <option value="Реклама">Реклама</option>
+                  <option value="Зарплати">Зарплати</option>
+                  <option value="IT та Сервіси">IT та Сервіси</option>
+                  <option value="Інше">Інше</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Сума ($)</label>
+                <input type="number" required value={amount} onChange={(e) => setAmount(e.target.value)} className="premium-input w-full text-white font-bold" placeholder="150" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">День місяця для списання</label>
+                <input type="number" min="1" max="28" required value={recDay} onChange={(e) => setRecDay(Number(e.target.value))} className="premium-input w-full" placeholder="1" />
+                <span className="text-[10px] text-text-gray">Введіть число від 1 до 28</span>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Коментар</label>
+                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className="premium-input w-full" placeholder="Наприклад: Оплата за інтернет" />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => setRecModalOpen(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase rounded-xl transition">
                   Скасувати
                 </button>
                 <button type="submit" disabled={submitting} className="flex-1 py-3 bg-brand hover:bg-brand-hover text-background font-bold uppercase rounded-xl transition disabled:opacity-50">
