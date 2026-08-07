@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
+import bcrypt from "bcryptjs";
 
 
 export async function GET(req: Request) {
@@ -19,6 +19,7 @@ export async function GET(req: Request) {
         role: true,
         salary: true,
         commissionRate: true,
+        avatar: true,
       },
       orderBy: { name: 'asc' }
     });
@@ -90,17 +91,62 @@ export async function PUT(req: Request) {
 
   try {
     const data = await req.json();
+    const updateData: any = {
+      salary: Number(data.salary),
+      commissionRate: Number(data.commissionRate),
+      role: data.role,
+      name: data.name,
+      email: data.email,
+    };
+    if (data.avatar !== undefined) updateData.avatar = data.avatar;
+    if (data.password) {
+      updateData.password = bcrypt.hashSync(data.password, 10);
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: data.id },
-      data: {
-        salary: Number(data.salary),
-        commissionRate: Number(data.commissionRate),
-        role: data.role
-      }
+      data: updateData
     });
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Failed to update user", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  const session = await auth();
+  if (!session || (session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const data = await req.json();
+    
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingUser) {
+      return NextResponse.json({ error: "Користувач з таким email вже існує" }, { status: 400 });
+    }
+
+    const hashedPassword = bcrypt.hashSync(data.password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: data.role || "MANAGER",
+        salary: Number(data.salary) || 0,
+        commissionRate: Number(data.commissionRate) || 0,
+        avatar: data.avatar || null,
+      }
+    });
+
+    const { password, ...userWithoutPassword } = newUser;
+    return NextResponse.json(userWithoutPassword);
+  } catch (error) {
+    console.error("Failed to create user", error);
+    return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { Users, Edit3, DollarSign, Briefcase } from "lucide-react";
+import { Users, Edit3, DollarSign, Briefcase, Plus, X, Upload } from "lucide-react";
+import Image from "next/image";
 
 interface UserStat {
   id: string;
@@ -14,6 +15,7 @@ interface UserStat {
   commissionRate: number;
   salesCount: number;
   totalBonus: number;
+  avatar?: string;
 }
 
 export default function TeamPage() {
@@ -29,6 +31,18 @@ export default function TeamPage() {
   const [editSalary, setEditSalary] = useState("");
   const [editCommission, setEditCommission] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editAvatar, setEditAvatar] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Creating state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState("MANAGER");
+  const [newSalary, setNewSalary] = useState("");
+  const [newCommission, setNewCommission] = useState("");
+  const [newAvatar, setNewAvatar] = useState("");
 
   const fetchTeam = async () => {
     setLoading(true);
@@ -56,7 +70,8 @@ export default function TeamPage() {
           id,
           salary: editSalary,
           commissionRate: editCommission,
-          role: editRole
+          role: editRole,
+          avatar: editAvatar
         })
       });
       if (res.ok) {
@@ -70,18 +85,88 @@ export default function TeamPage() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/admin/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName,
+          email: newEmail,
+          password: newPassword,
+          role: newRole,
+          salary: newSalary,
+          commissionRate: newCommission,
+          avatar: newAvatar
+        })
+      });
+      if (res.ok) {
+        setCreateModalOpen(false);
+        setNewName("");
+        setNewEmail("");
+        setNewPassword("");
+        setNewSalary("");
+        setNewCommission("");
+        setNewAvatar("");
+        fetchTeam();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Помилка створення");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    if (!e.target.files?.length) return;
+    setUploadingAvatar(true);
+    try {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (isEdit) {
+          setEditAvatar(data.url);
+        } else {
+          setNewAvatar(data.url);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const openEdit = (user: UserStat) => {
     setEditingUserId(user.id);
     setEditSalary(user.salary.toString());
     setEditCommission(user.commissionRate.toString());
     setEditRole(user.role);
+    setEditAvatar(user.avatar || "");
   };
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
-      <div>
-        <h1 className="text-3xl font-black text-white tracking-wide uppercase">Команда та KPI</h1>
-        <p className="text-text-gray mt-2">Управління менеджерами, ставки та розрахунок бонусів</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-white tracking-wide uppercase">Команда та KPI</h1>
+          <p className="text-text-gray mt-2">Управління менеджерами, ставки та розрахунок бонусів</p>
+        </div>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-background font-bold uppercase tracking-wider rounded-xl transition"
+        >
+          <Plus className="w-5 h-5" /> Додати Менеджера
+        </button>
       </div>
 
       <div className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -110,9 +195,20 @@ export default function TeamPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 rounded-bl-full -z-10 transition group-hover:bg-brand/10" />
               
               <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-white">{user.name}</h3>
-                  <p className="text-xs text-text-gray">{user.email}</p>
+                <div className="flex items-center gap-4">
+                  {user.avatar ? (
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-brand/20 relative">
+                      <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-brand/10 text-brand flex items-center justify-center font-black text-xl border-2 border-brand/20">
+                      {user.name[0]}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-bold text-white leading-tight">{user.name}</h3>
+                    <p className="text-xs text-text-gray">{user.email}</p>
+                  </div>
                 </div>
                 {editingUserId === user.id ? (
                   <button onClick={() => setEditingUserId(null)} className="text-xs font-bold text-text-gray uppercase hover:text-white">Скасувати</button>
@@ -139,6 +235,16 @@ export default function TeamPage() {
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] uppercase text-text-gray font-bold">% від прибутку з продажу</label>
                     <input type="number" value={editCommission} onChange={(e) => setEditCommission(e.target.value)} className="premium-input text-xs" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] uppercase text-text-gray font-bold">Аватар (URL або Завантажити)</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={editAvatar} onChange={(e) => setEditAvatar(e.target.value)} className="premium-input text-xs flex-grow" placeholder="https://..." />
+                      <label className="bg-brand/10 text-brand px-3 py-2 rounded-lg cursor-pointer hover:bg-brand hover:text-background transition flex items-center justify-center">
+                        {uploadingAvatar ? <span className="animate-spin text-xs">...</span> : <Upload className="w-4 h-4" />}
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadAvatar(e, true)} />
+                      </label>
+                    </div>
                   </div>
                   <button onClick={() => handleSaveUser(user.id)} className="w-full py-2 bg-brand text-background font-bold uppercase tracking-wider rounded-lg text-xs">
                     Зберегти
@@ -181,6 +287,69 @@ export default function TeamPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Create User Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0E2A24] w-full max-w-md rounded-3xl p-8 border border-white/10 shadow-2xl animate-scaleIn">
+            <h3 className="text-xl font-black text-white uppercase tracking-wide mb-6">Новий Менеджер</h3>
+            
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Ім'я</label>
+                <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)} className="premium-input w-full" placeholder="Іван Іванов" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Email</label>
+                <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="premium-input w-full" placeholder="ivan@example.com" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Пароль</label>
+                <input type="text" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="premium-input w-full" placeholder="******" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Роль</label>
+                  <select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="premium-input w-full">
+                    <option value="MANAGER">Менеджер</option>
+                    <option value="ADMIN">Адміністратор</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Ставка ($)</label>
+                  <input type="number" required value={newSalary} onChange={(e) => setNewSalary(e.target.value)} className="premium-input w-full text-white font-bold" placeholder="500" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">% від прибутку (бонус)</label>
+                <input type="number" required value={newCommission} onChange={(e) => setNewCommission(e.target.value)} className="premium-input w-full text-white font-bold" placeholder="10" />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-text-gray font-semibold uppercase tracking-wider">Аватар</label>
+                <div className="flex gap-2">
+                  <input type="text" value={newAvatar} onChange={(e) => setNewAvatar(e.target.value)} className="premium-input w-full text-xs" placeholder="URL зображення" />
+                  <label className="bg-brand/10 text-brand px-4 py-2 rounded-lg cursor-pointer hover:bg-brand hover:text-background transition flex items-center justify-center">
+                    {uploadingAvatar ? <span className="animate-spin text-xs">...</span> : <Upload className="w-5 h-5" />}
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadAvatar(e, false)} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => setCreateModalOpen(false)} className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase rounded-xl transition">
+                  Скасувати
+                </button>
+                <button type="submit" className="flex-1 py-3 bg-brand hover:bg-brand-hover text-background font-bold uppercase rounded-xl transition">
+                  Створити
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

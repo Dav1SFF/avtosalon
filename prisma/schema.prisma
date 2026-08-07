@@ -18,6 +18,7 @@ model User {
   role           String   @default("MANAGER") // ADMIN, MANAGER, CONTENT_MANAGER
   salary         Int      @default(0) // Fixed salary
   commissionRate Float    @default(0) // Percentage of profit
+  avatar         String?  // URL of avatar image
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
