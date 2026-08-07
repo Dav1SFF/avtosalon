@@ -132,9 +132,9 @@ export async function PUT(request: Request, { params }: Props) {
       }
     }
 
-    return NextResponse.json({ success: true, lead: updatedLead });
-  } catch (error: any) {
-    console.error("PUT Lead CRM Error:", error);
+    return NextResponse.json({ message: "Lead updated successfully", lead: updatedLead });
+  } catch (error) {
+    console.error("Error updating lead:", error);
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 }

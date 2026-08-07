@@ -346,6 +346,15 @@ export default function AdminLeadsPage() {
                       <a href={`/admin/leads/${lead.id}`} className="bg-white/10 hover:bg-brand hover:text-black border border-white/10 hover:border-brand text-white font-bold text-xs uppercase tracking-wider transition-all px-4 py-2 rounded-xl">
                         Відкрити
                       </a>
+                      {(session?.user as any)?.role === "ADMIN" && (
+                        <button 
+                          onClick={() => handleDeleteLead(lead.id)}
+                          className="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 transition-all p-2 rounded-xl"
+                          title="Видалити заявку"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
