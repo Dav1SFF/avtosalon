@@ -600,62 +600,64 @@ export default function AdminCarsPage() {
                 </div>
 
                 {/* Actions Bottom Bar */}
-                <div className="mt-auto bg-black/20 border-t border-white/5 p-4 flex justify-between items-center">
-                  <div className="flex gap-2">
+                <div className="mt-auto bg-black/20 border-t border-white/5 p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                  <div className="grid grid-cols-3 sm:flex gap-2 w-full sm:w-auto">
                     <Link
                       href={`/catalog/${car.id}`}
                       target="_blank"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition"
+                      className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-[10px] sm:text-xs font-semibold transition"
                     >
                       <Eye className="w-3.5 h-3.5" /> На сайт
                     </Link>
                     <Link
                       href={`/admin/story/${car.id}`}
                       target="_blank"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-tr from-yellow-500/20 to-purple-500/20 hover:from-yellow-500 hover:to-purple-500 text-white text-xs font-semibold transition border border-white/5"
+                      className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-1.5 rounded-lg bg-gradient-to-tr from-yellow-500/20 to-purple-500/20 hover:from-yellow-500 hover:to-purple-500 text-white text-[10px] sm:text-xs font-semibold transition border border-white/5"
                     >
                       <Smartphone className="w-3.5 h-3.5" /> Story
                     </Link>
                     <Link
                       href={`/admin/print/${car.id}`}
                       target="_blank"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-green-500/10 hover:text-green-400 text-white text-xs font-semibold transition"
+                      className="flex items-center justify-center gap-1.5 px-2 py-2 sm:px-3 sm:py-1.5 rounded-lg bg-white/5 hover:bg-green-500/10 hover:text-green-400 text-white text-[10px] sm:text-xs font-semibold transition"
                     >
                       <Printer className="w-3.5 h-3.5" /> Друк
                     </Link>
                   </div>
                   
-                  {/* Creator Info */}
-                  {car.createdByUser && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-black/40 rounded-full border border-white/5 mx-auto lg:mx-0">
-                      {car.createdByUser.avatar ? (
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-brand/30 relative shrink-0">
-                          <Image src={car.createdByUser.avatar} alt={car.createdByUser.name} fill className="object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center text-[10px] font-bold text-brand border border-brand/30 shrink-0">
-                          {car.createdByUser.name[0]}
-                        </div>
-                      )}
-                      <span className="text-[10px] font-bold text-text-gray uppercase tracking-wider hidden xl:block">
-                        {car.createdByUser.name}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between w-full sm:w-auto items-center">
+                    {/* Creator Info */}
+                    {car.createdByUser ? (
+                      <div className="flex items-center gap-2 px-3 py-1.5 sm:py-1 bg-black/40 rounded-full border border-white/5">
+                        {car.createdByUser.avatar ? (
+                          <div className="w-5 h-5 rounded-full overflow-hidden border border-brand/30 relative shrink-0">
+                            <Image src={car.createdByUser.avatar} alt={car.createdByUser.name} fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center text-[10px] font-bold text-brand border border-brand/30 shrink-0">
+                            {car.createdByUser.name[0]}
+                          </div>
+                        )}
+                        <span className="text-[10px] font-bold text-text-gray uppercase tracking-wider hidden sm:block">
+                          {car.createdByUser.name}
+                        </span>
+                      </div>
+                    ) : <div />}
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditClick(car)}
-                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand/10 hover:bg-brand hover:text-background text-brand text-xs font-bold uppercase tracking-wider transition"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" /> Редаг.
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCar(car.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-gray hover:text-red-400 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(car)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-1.5 rounded-lg bg-brand/10 hover:bg-brand hover:text-background text-brand text-[10px] sm:text-xs font-bold uppercase tracking-wider transition"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" /> Редаг.
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCar(car.id)}
+                        className="p-2 sm:p-1.5 rounded-lg hover:bg-red-500/10 text-text-gray hover:text-red-400 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -206,24 +206,28 @@ export default function ExpensesPage() {
 
       {activeTab === "history" ? (
         <>
-          <div className="flex gap-4 items-center bg-white/5 p-4 rounded-2xl border border-white/5">
-            <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="premium-input w-40">
-              {Array.from({length: 12}).map((_, i) => (
-                <option key={i+1} value={i+1}>{format(new Date(2000, i, 1), 'LLLL', {locale: uk})}</option>
-              ))}
-            </select>
-            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="premium-input w-32">
-              {[2024, 2025, 2026, 2027].map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="premium-input flex-1 sm:w-40">
+                {Array.from({length: 12}).map((_, i) => (
+                  <option key={i+1} value={i+1}>{format(new Date(2000, i, 1), 'LLLL', {locale: uk})}</option>
+                ))}
+              </select>
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="premium-input w-24 sm:w-32">
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
             
-            <button onClick={downloadExcel} className="ml-4 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition text-white uppercase tracking-wider">
-              <Download className="w-4 h-4 text-brand" /> Експорт в Excel
-            </button>
+            <div className="flex w-full sm:w-auto justify-between sm:justify-end items-center gap-4">
+              <button onClick={downloadExcel} className="flex items-center justify-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-3 sm:py-2 rounded-xl sm:rounded-lg transition text-white uppercase tracking-wider flex-1 sm:flex-none">
+                <Download className="w-4 h-4 text-brand" /> <span className="hidden sm:inline">Експорт</span>
+              </button>
 
-            <div className="ml-auto flex items-center gap-2 text-brand font-black text-xl">
-              Всього: ${totalAmount}
+              <div className="flex items-center gap-2 text-brand font-black text-xl shrink-0">
+                Всього: ${totalAmount}
+              </div>
             </div>
           </div>
 
@@ -234,49 +238,83 @@ export default function ExpensesPage() {
           За цей період витрат не знайдено
         </div>
       ) : (
-        <div className="bg-[#0A1A17] rounded-3xl border border-white/5 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-text-gray font-bold">
-                <th className="p-4 pl-6">Дата</th>
-                <th className="p-4">Категорія</th>
-                <th className="p-4">Коментар</th>
-                <th className="p-4 text-right">Сума</th>
-                <th className="p-4 pr-6 text-right">Дії</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {expenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-white/5 transition group">
-                  <td className="p-4 pl-6">
-                    <div className="flex items-center gap-2 text-sm text-white">
-                      <Calendar className="w-4 h-4 text-brand" />
-                      {format(new Date(expense.date), "dd.MM.yyyy")}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 text-xs text-text-gray font-semibold border border-white/10">
-                      <Tag className="w-3 h-3" /> {expense.category}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2 text-sm text-text-gray">
-                      <FileText className="w-4 h-4 opacity-50" />
-                      {expense.note}
-                    </div>
-                  </td>
-                  <td className="p-4 text-right font-bold text-red-400 text-lg">
-                    -${expense.amount}
-                  </td>
-                  <td className="p-4 pr-6 text-right">
-                    <button onClick={() => handleDelete(expense.id)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+        <div className="bg-transparent md:bg-[#0A1A17] md:rounded-3xl md:border border-white/5 overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/5 text-[10px] uppercase tracking-widest text-text-gray font-bold">
+                  <th className="p-4 pl-6">Дата</th>
+                  <th className="p-4">Категорія</th>
+                  <th className="p-4">Коментар</th>
+                  <th className="p-4 text-right">Сума</th>
+                  <th className="p-4 pr-6 text-right">Дії</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {expenses.map((expense) => (
+                  <tr key={expense.id} className="hover:bg-white/5 transition group">
+                    <td className="p-4 pl-6">
+                      <div className="flex items-center gap-2 text-sm text-white">
+                        <Calendar className="w-4 h-4 text-brand" />
+                        {format(new Date(expense.date), "dd.MM.yyyy")}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 text-xs text-text-gray font-semibold border border-white/10">
+                        <Tag className="w-3 h-3" /> {expense.category}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-sm text-text-gray">
+                        <FileText className="w-4 h-4 opacity-50" />
+                        {expense.note}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right font-bold text-red-400 text-lg">
+                      -${expense.amount}
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                      <button onClick={() => handleDelete(expense.id)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col gap-3">
+            {expenses.map((expense) => (
+              <div key={expense.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col relative group">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2 text-white font-bold">
+                    <Calendar className="w-4 h-4 text-brand" />
+                    {format(new Date(expense.date), "dd.MM.yyyy")}
+                  </div>
+                  <div className="text-xl font-black text-red-400">-${expense.amount}</div>
+                </div>
+                <div className="mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-xs text-white font-semibold">
+                    <Tag className="w-3 h-3" /> {expense.category}
+                  </div>
+                </div>
+                {expense.note && (
+                  <div className="text-sm text-text-gray bg-black/20 p-3 rounded-xl w-[calc(100%-40px)]">
+                    <p className="italic">"{expense.note}"</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => handleDelete(expense.id)}
+                  className="absolute bottom-4 right-4 p-2 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       </>

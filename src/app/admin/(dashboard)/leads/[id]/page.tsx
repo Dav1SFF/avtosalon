@@ -208,10 +208,10 @@ export default function LeadDetailsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 h-[calc(100vh-200px)] overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 lg:h-[calc(100vh-200px)] lg:overflow-hidden pb-10 lg:pb-0">
         
         {/* Left Column: Client Info */}
-        <div className="lg:col-span-3 bg-black/20 border border-white/10 rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+        <div className="lg:col-span-3 bg-black/20 border border-white/10 rounded-2xl p-4 sm:p-6 lg:overflow-y-auto custom-scrollbar">
           <h2 className="text-white font-bold uppercase tracking-wider text-sm mb-4 border-b border-white/10 pb-2">Дані Клієнта</h2>
           
           <div className="space-y-4">
@@ -272,7 +272,7 @@ export default function LeadDetailsPage() {
         </div>
 
         {/* Center Column: Comments */}
-        <div className="lg:col-span-6 flex flex-col bg-black/40 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="lg:col-span-6 flex flex-col bg-black/40 border border-white/5 rounded-2xl lg:overflow-hidden min-h-[400px] lg:min-h-0">
           <div className="p-4 border-b border-white/10 bg-white/5">
             <h2 className="text-white font-bold uppercase tracking-wider text-sm flex items-center gap-2">
               <MessageSquare className="w-4 h-4" /> Коментарі та історія
@@ -307,16 +307,16 @@ export default function LeadDetailsPage() {
 
           <div className="p-4 bg-black/60 border-t border-white/10">
             {isAdmin || isAssignedToMe ? (
-              <form onSubmit={handleAddComment} className="flex gap-2">
+              <form onSubmit={handleAddComment} className="flex gap-2 w-full">
                 <input
                   type="text"
                   placeholder="Введіть коментар..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand transition"
+                  className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand transition"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   required
                 />
-                <button type="submit" className="bg-brand text-black p-3 rounded-xl hover:bg-brand/80 transition flex items-center justify-center font-bold gap-2">
+                <button type="submit" className="bg-brand text-black px-4 py-3 rounded-xl hover:bg-brand/80 transition flex items-center justify-center font-bold shrink-0">
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline">Надіслати</span>
                 </button>
@@ -330,7 +330,7 @@ export default function LeadDetailsPage() {
         </div>
 
         {/* Right Column: Assignees & Settings */}
-        <div className="lg:col-span-3 bg-black/20 border border-white/10 rounded-2xl p-6 overflow-y-auto custom-scrollbar flex flex-col">
+        <div className="lg:col-span-3 bg-black/20 border border-white/10 rounded-2xl p-4 sm:p-6 lg:overflow-y-auto custom-scrollbar flex flex-col">
           <h2 className="text-white font-bold uppercase tracking-wider text-sm mb-4 border-b border-white/10 pb-2">Управління</h2>
           
           <div className="space-y-6">

@@ -195,18 +195,18 @@ export default function AdminLeadsPage() {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <span className="text-xs font-bold text-brand uppercase tracking-wider">Керування запитами клієнтів</span>
-          <h1 className="text-3xl font-extrabold text-white mt-1 uppercase">CRM (Kanban)</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-1 uppercase">CRM (Kanban)</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={() => fetchLeads(true)}
-            className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
+            className="flex-1 sm:flex-none p-3 justify-center rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
           >
             <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline font-bold">Оновити</span>
+            <span className="font-bold">Оновити</span>
           </button>
         </div>
       </div>
@@ -268,7 +268,8 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-transparent overflow-hidden overflow-x-auto relative min-h-[500px] pb-10">
+      {/* Desktop Table View */}
+      <div className="hidden lg:block flex-1 bg-transparent overflow-hidden overflow-x-auto relative min-h-[500px] pb-10">
         <table className="w-full text-left text-sm text-white whitespace-nowrap border-separate border-spacing-y-3">
           <thead className="bg-transparent text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
             <tr>
@@ -362,6 +363,90 @@ export default function AdminLeadsPage() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="lg:hidden flex flex-col gap-4 pb-10">
+        {filteredLeads.map(lead => {
+          const details = JSON.parse(lead.details || "{}");
+          const col = COLUMNS.find(c => c.id === lead.status);
+          
+          return (
+            <div key={lead.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col gap-3">
+              {/* Header */}
+              <div className="flex justify-between items-start">
+                <div className="relative inline-block border border-white/10 rounded-xl overflow-hidden shadow-sm">
+                  <select
+                    value={lead.status}
+                    onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                    className={`appearance-none bg-black/60 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest cursor-pointer outline-none ${col?.headerText}`}
+                  >
+                    {COLUMNS.map(c => (
+                      <option key={c.id} value={c.id} className="bg-[#1a1a1a]">{c.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <span className="text-[10px] font-extrabold px-3 py-1.5 rounded-lg bg-white/10 text-white uppercase tracking-widest shadow-sm border border-white/5">
+                  {typeLabels[lead.type] || lead.type}
+                </span>
+              </div>
+              
+              {/* Info */}
+              <div>
+                <div className="font-extrabold text-lg tracking-wide mb-1">{lead.name}</div>
+                <div className="text-brand text-sm font-mono bg-brand/10 inline-block px-2 py-0.5 rounded font-bold">{lead.phone}</div>
+              </div>
+              
+              {/* Details */}
+              <div className="text-white/80 text-sm font-medium bg-black/20 p-3 rounded-xl border border-white/5">
+                {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make ? (
+                  <span>{details.make} {details.model} <span className="opacity-50">({details.year})</span></span>
+                ) : lead.type === "BOOKING" && details.carName ? (
+                  <span>{details.carName}</span>
+                ) : (
+                  <span className="italic opacity-30 text-xs">Немає деталей</span>
+                )}
+              </div>
+              
+              {/* Dates */}
+              <div className="flex flex-col gap-1.5 mt-1">
+                <div className="text-[10px] text-text-gray font-bold uppercase tracking-widest">
+                  Створено: <span className="text-white/70">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</span>
+                </div>
+                {lead.nextContactDate && (
+                  <div className="flex items-center gap-1.5 text-xs text-yellow-400 font-extrabold bg-yellow-400/10 px-2.5 py-1 rounded-lg w-max border border-yellow-400/20 shadow-sm">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {new Date(lead.nextContactDate).toLocaleString("uk-UA", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )}
+              </div>
+              
+              {/* Actions */}
+              <div className="flex justify-between items-center mt-2 pt-3 border-t border-white/10">
+                <div className="flex -space-x-2">
+                  {lead.assignedUsers?.map((u) => (
+                    <div key={u.id} className="w-7 h-7 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-extrabold border-2 border-[#1a1a1a] z-10 overflow-hidden shadow-md">
+                      {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {(session?.user as any)?.role === "ADMIN" && (
+                    <button 
+                      onClick={() => handleDeleteLead(lead.id)}
+                      className="bg-red-500/10 text-red-400 border border-red-500/20 p-2 rounded-xl"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <a href={`/admin/leads/${lead.id}`} className="bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-xl flex items-center">
+                    Відкрити
+                  </a>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Comment Modal */}
