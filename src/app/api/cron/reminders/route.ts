@@ -83,9 +83,18 @@ export async function GET(request: Request) {
                         `📱 Номер телефона: ${lead.phone}\n\n` +
                         `🔗 Ссылка на заявку: ${leadUrl}`;
 
+        const reply_markup = {
+          inline_keyboard: [
+            [
+              { text: "❌ Відмінити", callback_data: `remind_cancel_${lead.id}` },
+              { text: "🕒 Перенести", callback_data: `remind_postpone_${lead.id}` }
+            ]
+          ]
+        };
+
         for (const user of lead.assignedUsers) {
           if (user.telegramId) {
-            await sendTelegramMessage(message, undefined, user.telegramId);
+            await sendTelegramMessage(message, reply_markup, user.telegramId);
             sentCount++;
           }
         }

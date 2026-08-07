@@ -116,8 +116,18 @@ export async function PUT(request: Request, { params }: Props) {
       for (const user of updatedLead.assignedUsers) {
         if (user.telegramId) {
           const message = `🔔 Ви встановили нагадування (${reminderType.toLowerCase()}) для клієнта *${updatedLead.name}* (заявка: ${typeLabels[updatedLead.type] || updatedLead.type}).\n\nЯ нагадаю вам за 3 години, за 1 годину та за 10 хвилин.`;
+          
+          const reply_markup = {
+            inline_keyboard: [
+              [
+                { text: "❌ Відмінити", callback_data: `remind_cancel_${updatedLead.id}` },
+                { text: "🕒 Перенести", callback_data: `remind_postpone_${updatedLead.id}` }
+              ]
+            ]
+          };
+
           // We don't await this to avoid slowing down the response
-          sendTelegramMessage(message, undefined, user.telegramId).catch(console.error);
+          sendTelegramMessage(message, reply_markup, user.telegramId).catch(console.error);
         }
       }
     }
