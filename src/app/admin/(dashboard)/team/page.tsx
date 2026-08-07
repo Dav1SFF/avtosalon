@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
 import { uk } from "date-fns/locale";
-import { Users, Edit3, DollarSign, Briefcase, Plus, X, Upload } from "lucide-react";
+import { Users, Edit3, DollarSign, Briefcase, Plus, X, Upload, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 interface UserStat {
@@ -126,6 +126,22 @@ export default function TeamPage() {
     }
   };
 
+  const handleDeleteUser = async (id: string, name: string) => {
+    if (!confirm(`Ви впевнені, що хочете видалити користувача ${name}? Це незворотна дія.`)) return;
+    try {
+      const res = await fetch(`/api/admin/team?id=${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        fetchTeam();
+      } else {
+        alert("Помилка видалення");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     if (!e.target.files?.length) return;
     setUploadingAvatar(true);
@@ -221,9 +237,14 @@ export default function TeamPage() {
                 {editingUserId === user.id ? (
                   <button onClick={() => setEditingUserId(null)} className="text-xs font-bold text-text-gray uppercase hover:text-white">Скасувати</button>
                 ) : (
-                  <button onClick={() => openEdit(user)} className="p-2 bg-white/5 text-text-gray rounded-lg hover:text-brand transition">
-                    <Edit3 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleDeleteUser(user.id, user.name)} className="p-2 bg-white/5 text-text-gray rounded-lg hover:text-red-500 transition">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => openEdit(user)} className="p-2 bg-white/5 text-text-gray rounded-lg hover:text-brand transition">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  </div>
                 )}
               </div>
 

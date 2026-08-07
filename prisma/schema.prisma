@@ -135,3 +135,9 @@ model ActivityLog {
   details    String   // JSON string with extra details (e.g. old status, new status)
   createdAt  DateTime @default(now())
 }
+
+model BotLog {
+  id        String   @id @default(uuid())
+  payload   String   // JSON string of the raw payload
+  createdAt DateTime @default(now())
+}

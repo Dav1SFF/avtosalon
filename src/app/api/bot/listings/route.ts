@@ -14,6 +14,13 @@ export async function POST(req: Request) {
     const data = await req.json();
     console.log("📥 [BOT API] Отримано новий запит від бота:", data);
 
+    // Save full raw payload to BotLog
+    await prisma.botLog.create({
+      data: {
+        payload: JSON.stringify(data, null, 2)
+      }
+    });
+
     const telegramId = data.user_id ? String(data.user_id) : null;
     let createdById: string | null = null;
     let user = null;

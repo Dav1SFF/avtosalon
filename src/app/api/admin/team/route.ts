@@ -166,3 +166,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const session = await auth();
+  if (!session || (session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("id");
+    if (!userId) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+
+    // First, unlink cars that point to this user
+    await prisma.car.updateMany({
+      where: { soldById: userId },
+      data: { soldById: null }
+    });
+    await prisma.car.updateMany({
+      where: { createdById: userId },
+      data: { createdById: null }
+    });
+
+    // Delete the user
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete user", error);
+    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
+  }
+}

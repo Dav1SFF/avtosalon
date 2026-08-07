@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Car, PhoneCall, Settings, LogOut, User, RefreshCw, Menu, X, Activity } from "lucide-react";
+import { LayoutDashboard, Car, PhoneCall, Settings, LogOut, User, RefreshCw, Menu, X, Activity, Terminal } from "lucide-react";
 import AccountSwitcher from "@/components/AccountSwitcher";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
@@ -46,7 +46,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     ...(isAdmin ? [
       { name: "Загальні витрати", href: "/admin/expenses", icon: Settings },
       { name: "Команда (KPI)", href: "/admin/team", icon: User },
-      { name: "Історія дій", href: "/admin/activity", icon: Activity }
+      { name: "Історія дій", href: "/admin/activity", icon: Activity },
+      { name: "Логи бота", href: "/admin/bot-logs", icon: Terminal }
     ] : [])
   ];
 
