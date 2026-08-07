@@ -3,10 +3,14 @@ import { prisma } from "@/lib/prisma";
 import AdminChart from "@/components/AdminChart";
 import { Car, PhoneCall, Star, FileText, ArrowUpRight, DollarSign } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/app/api/auth/[...nextauth]/route";
 
 export const revalidate = 0; // Dynamic view
 
 export default async function AdminDashboardPage() {
+  const session = await auth();
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
+
   // Query database statistics
   const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount, soldCars] = await Promise.all([
     prisma.car.count(),
@@ -54,7 +58,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${isAdmin ? '5' : '4'} gap-6`}>
         
         {/* Total Cars */}
         <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
@@ -103,17 +107,19 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Total Margin */}
-        <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
-          <div>
-            <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block text-brand">Прибуток</span>
-            <span className="text-2xl font-extrabold text-white mt-2 block font-mono">
-              ${totalMargin.toLocaleString("en-US")}
-            </span>
+        {isAdmin && (
+          <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block text-brand">Прибуток</span>
+              <span className="text-2xl font-extrabold text-white mt-2 block font-mono">
+                ${totalMargin.toLocaleString("en-US")}
+              </span>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center">
+              <DollarSign className="w-6 h-6" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center">
-            <DollarSign className="w-6 h-6" />
-          </div>
-        </div>
+        )}
 
       </div>
 

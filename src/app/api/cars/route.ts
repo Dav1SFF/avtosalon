@@ -112,6 +112,9 @@ export async function POST(request: Request) {
       equipment,
       serviceHistory,
       status,
+      buyPrice,
+      expenses,
+      expenseLog,
     } = body;
 
     if (!make || !model || !price || !year) {
@@ -136,6 +139,9 @@ export async function POST(request: Request) {
         equipment: typeof equipment === "string" ? equipment : JSON.stringify(equipment || []),
         serviceHistory: typeof serviceHistory === "string" ? serviceHistory : JSON.stringify(serviceHistory || []),
         status: status || "IN_STOCK",
+        buyPrice: buyPrice ? parseInt(buyPrice) : null,
+        expenses: expenses ? parseInt(expenses) : null,
+        expenseLog: typeof expenseLog === "string" ? expenseLog : JSON.stringify(expenseLog || []),
       },
     });
 

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer, Sparkles, Search, Smartphone } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, RefreshCw, X, Eye, Printer, Sparkles, Search, Smartphone, DollarSign } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Car {
   id: string;
@@ -21,8 +22,12 @@ interface Car {
   images: string;
   description: string;
   specs: string;
+  specs: string;
   equipment: string;
   serviceHistory: string;
+  buyPrice?: number | null;
+  expenses?: number | null;
+  expenseLog?: string | null;
 }
 
 export default function AdminCarsPage() {
@@ -31,8 +36,13 @@ export default function AdminCarsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Form Drawer Modal states
+  // Form Drawer Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCarId, setEditingCarId] = useState<string | null>(null);
+
+  // Session & Role
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
 
   // Form Fields State
   const [make, setMake] = useState("");
@@ -59,8 +69,10 @@ export default function AdminCarsPage() {
   // Equipment List
   const [eqText, setEqText] = useState("");
 
-  // Service History
+  // Service History & Expenses
   const [serviceHistory, setServiceHistory] = useState<{ date: string; mileage: number; type: string; note: string }[]>([]);
+  const [expenseLog, setExpenseLog] = useState<{ date: string; type: string; amount: number; note: string }[]>([]);
+  const [buyPrice, setBuyPrice] = useState("");
 
   // Image Upload State
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -260,6 +272,19 @@ export default function AdminCarsPage() {
       setServiceHistory([]);
     }
 
+    // Admin Finances
+    setBuyPrice(car.buyPrice ? car.buyPrice.toString() : "");
+    try {
+      if (typeof car.expenseLog === 'string' && car.expenseLog.trim().startsWith('[')) {
+        const parsedExps = JSON.parse(car.expenseLog);
+        setExpenseLog(Array.isArray(parsedExps) ? parsedExps : []);
+      } else {
+        setExpenseLog([]);
+      }
+    } catch (e) {
+      setExpenseLog([]);
+    }
+
     setModalOpen(true);
   };
 
@@ -287,6 +312,8 @@ export default function AdminCarsPage() {
     
     setEqText("Шкіряний салон, Камера 360, Адаптивний круїз");
     setServiceHistory([]);
+    setExpenseLog([]);
+    setBuyPrice("");
     setModalOpen(true);
   };
 
@@ -312,7 +339,9 @@ export default function AdminCarsPage() {
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
 
-    const payload = {
+    const totalExpenses = expenseLog.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    const payload: any = {
       make,
       model,
       price,
@@ -330,6 +359,12 @@ export default function AdminCarsPage() {
       serviceHistory,
       status,
     };
+
+    if (isAdmin) {
+      payload.buyPrice = buyPrice;
+      payload.expenses = totalExpenses.toString();
+      payload.expenseLog = expenseLog;
+    }
 
     try {
       const url = editingCarId ? `/api/cars/${editingCarId}` : "/api/cars";
@@ -663,6 +698,58 @@ export default function AdminCarsPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Admin Financials (Expense Log & Buy Price) */}
+                {isAdmin && (
+                  <div className="border-t border-white/5 pt-4 space-y-4">
+                    <div className="flex justify-between items-center bg-brand/5 p-4 rounded-xl border border-brand/20">
+                      <div>
+                        <span className="block text-brand font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" /> Фінанси (тільки для Власника)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-text-gray font-semibold">Ціна викупу, $:</label>
+                        <input type="number" placeholder="25000" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} className="premium-input text-xs w-24 text-center" />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center px-2">
+                      <span className="block text-white font-bold text-xs uppercase tracking-wider">Журнал витрат</span>
+                      <button
+                        type="button"
+                        onClick={() => setExpenseLog([...expenseLog, { date: "", type: "", amount: 0, note: "" }])}
+                        className="text-green-400 text-xs font-bold hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> Додати витрату
+                      </button>
+                    </div>
+
+                    {expenseLog.map((exp, idx) => (
+                      <div key={idx} className="p-4 bg-green-500/5 rounded-xl border border-green-500/10 relative space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setExpenseLog(expenseLog.filter((_, i) => i !== idx))}
+                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="grid grid-cols-4 gap-3">
+                          <input type="text" placeholder="Дата (напр. 15.08)" value={exp.date} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].date = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
+                          <input type="text" placeholder="Тип (Ремонт, ТО)" value={exp.type} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].type = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
+                          <input type="number" placeholder="Сума $" value={exp.amount || ""} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].amount = parseInt(e.target.value) || 0; setExpenseLog(newLog); }} className="premium-input text-xs font-bold text-green-400" required />
+                          <input type="text" placeholder="Коментар" value={exp.note} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].note = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {expenseLog.length > 0 && (
+                      <div className="flex justify-end pr-2">
+                        <span className="text-xs text-text-gray font-semibold">Разом витрат: <span className="text-brand text-sm">${expenseLog.reduce((sum, item) => sum + (item.amount || 0), 0)}</span></span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
