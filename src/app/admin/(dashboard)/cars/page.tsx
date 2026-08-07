@@ -22,7 +22,6 @@ interface Car {
   images: string;
   description: string;
   specs: string;
-  specs: string;
   equipment: string;
   serviceHistory: string;
   buyPrice?: number | null;
