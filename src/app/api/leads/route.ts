@@ -6,6 +6,11 @@ export async function GET() {
   try {
     const leads = await prisma.lead.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        assignedUsers: {
+          select: { id: true, name: true, avatar: true }
+        }
+      }
     });
     return NextResponse.json({ leads });
   } catch (error: any) {

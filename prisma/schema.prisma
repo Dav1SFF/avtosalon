@@ -25,6 +25,7 @@ model User {
   
   carsCreated    Car[]    @relation("CreatedCars")
   carsSold       Car[]    @relation("SoldCars")
+  assignedLeads  Lead[]   @relation("LeadAssignees")
 }
 
 model Car {
@@ -77,6 +78,9 @@ model Lead {
   nextContactDate DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  assignedUsers   User[]    @relation("LeadAssignees")
+  isPublic        Boolean   @default(true)
 }
 
 model Review {

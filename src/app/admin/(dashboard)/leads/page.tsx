@@ -14,6 +14,8 @@ interface Lead {
   createdAt: string;
   source?: string;
   nextContactDate?: string;
+  isPublic?: boolean;
+  assignedUsers?: { id: string; name: string; avatar: string | null }[];
 }
 
 const COLUMNS = [
@@ -226,18 +228,18 @@ export default function AdminLeadsPage() {
                           </span>
                         </div>
                         <div className="flex gap-1">
-                          <button onClick={() => {
-                            setActiveLead(lead);
-                            setEditName(lead.name);
-                            setEditPhone(lead.phone);
-                            setEditNextContactDate(lead.nextContactDate ? new Date(lead.nextContactDate).toISOString().slice(0, 16) : "");
-                            setEditModalOpen(true);
-                          }} className="p-1 hover:bg-white/10 rounded text-text-gray hover:text-white">
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button onClick={() => handleDeleteLead(lead.id)} className="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300">
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                          {lead.assignedUsers && lead.assignedUsers.length > 0 && (
+                            <div className="flex -space-x-2 mr-2">
+                              {lead.assignedUsers.map((u) => (
+                                <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
+                                  {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <a href={`/admin/leads/${lead.id}`} className="p-1 hover:bg-brand/20 rounded text-brand font-bold text-[10px] uppercase flex items-center gap-1 transition">
+                            Відкрити
+                          </a>
                         </div>
                       </div>
 
@@ -349,30 +351,19 @@ export default function AdminLeadsPage() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-50 group-hover:opacity-100 transition">
-                        <button 
-                          onClick={() => {
-                            setActiveLead(lead);
-                            setCommentModalOpen(true);
-                          }}
-                          className="p-1.5 hover:bg-white/10 rounded text-brand flex items-center gap-1"
-                          title="Коментарі"
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span className="text-[10px] font-bold">{comments.length}</span>
-                        </button>
-                        <button onClick={() => {
-                          setActiveLead(lead);
-                          setEditName(lead.name);
-                          setEditPhone(lead.phone);
-                          setEditNextContactDate(lead.nextContactDate ? new Date(lead.nextContactDate).toISOString().slice(0, 16) : "");
-                          setEditModalOpen(true);
-                        }} className="p-1.5 hover:bg-white/10 rounded text-text-gray hover:text-white" title="Редагувати">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDeleteLead(lead.id)} className="p-1.5 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300" title="Видалити">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center justify-end gap-3 opacity-50 group-hover:opacity-100 transition">
+                        {lead.assignedUsers && lead.assignedUsers.length > 0 && (
+                          <div className="flex -space-x-2 mr-2">
+                            {lead.assignedUsers.map((u) => (
+                              <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
+                                {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <a href={`/admin/leads/${lead.id}`} className="text-brand hover:underline font-bold text-xs uppercase transition">
+                          Відкрити заявку
+                        </a>
                       </div>
                     </td>
                   </tr>

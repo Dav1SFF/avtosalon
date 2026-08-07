@@ -19,15 +19,29 @@ export async function POST(request: Request) {
         const leadId = data.replace(isProgress ? "lead_progress_" : "lead_reject_", "");
         const newStatus = isProgress ? "IN_PROGRESS" : "REJECTED";
 
+        const telegramUserId = callbackQuery.from?.id ? String(callbackQuery.from.id) : null;
+        let userName = callbackQuery.from?.first_name || "Менеджер";
+
+        let updateData: any = { status: newStatus };
+
+        // Connect User if found by telegramId
+        if (isProgress && telegramUserId) {
+          const user = await prisma.user.findUnique({ where: { telegramId: telegramUserId } });
+          if (user) {
+            updateData.assignedUsers = { connect: { id: user.id } };
+            userName = user.name; // Use DB name
+          }
+        }
+
         // Update lead in DB
         await prisma.lead.update({
           where: { id: leadId },
-          data: { status: newStatus },
+          data: updateData,
         });
 
         // Edit the message in Telegram to remove buttons and show updated status
         const originalText = callbackQuery.message.text;
-        const statusText = isProgress ? "✅ Взято в роботу менеджером" : "❌ Відхилено";
+        const statusText = isProgress ? `✅ Взято в роботу менеджером: ${userName}` : `❌ Відхилено (${userName})`;
         const newText = `${originalText}\n\n${statusText}`;
 
         if (botToken) {

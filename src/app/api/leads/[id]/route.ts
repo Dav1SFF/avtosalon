@@ -14,7 +14,7 @@ export async function PUT(request: Request, { params }: Props) {
     
     const { id } = await params;
     const body = await request.json();
-    const { status, comment, name, phone, details, nextContactDate, source } = body;
+    const { status, comment, name, phone, details, nextContactDate, source, assignUserId, unassignUserId, isPublic } = body;
 
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) {
@@ -70,9 +70,25 @@ export async function PUT(request: Request, { params }: Props) {
       }
     }
 
+    if (isPublic !== undefined) {
+      data.isPublic = isPublic;
+    }
+
+    if (assignUserId) {
+      data.assignedUsers = { connect: { id: assignUserId } };
+    }
+    if (unassignUserId) {
+      data.assignedUsers = { disconnect: { id: unassignUserId } };
+    }
+
     const updatedLead = await prisma.lead.update({
       where: { id },
       data,
+      include: {
+        assignedUsers: {
+          select: { id: true, name: true, avatar: true }
+        }
+      }
     });
 
     return NextResponse.json({ success: true, lead: updatedLead });
@@ -104,7 +120,40 @@ export async function DELETE(request: Request, { params }: Props) {
     
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("DELETE Lead CRM Error:", error);
+    console.error("DELETE Lead API Error:", error);
     return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request, { params }: Props) {
+  try {
+    const session = await auth();
+    const user = session?.user as any;
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await params;
+    const lead = await prisma.lead.findUnique({
+      where: { id },
+      include: {
+        assignedUsers: {
+          select: { id: true, name: true, avatar: true }
+        }
+      }
+    });
+
+    if (!lead) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Check privacy
+    if (!lead.isPublic && user.role !== "ADMIN") {
+      const isAssigned = lead.assignedUsers.some((u: any) => u.id === user.id);
+      if (!isAssigned) {
+        return NextResponse.json({ error: "Forbidden: This lead is private." }, { status: 403 });
+      }
+    }
+
+    return NextResponse.json({ lead });
+  } catch (error: any) {
+    console.error("GET Lead API Error:", error);
+    return NextResponse.json({ error: "Failed to fetch lead" }, { status: 500 });
   }
 }
