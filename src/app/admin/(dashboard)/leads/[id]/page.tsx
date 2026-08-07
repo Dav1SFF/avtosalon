@@ -103,6 +103,7 @@ export default function LeadDetailsPage() {
     const newComment = {
       text: commentText,
       author: session.user.name || "Менеджер",
+      authorAvatar: session.user.image || (session.user as any).avatar,
       createdAt: new Date().toISOString()
     };
 
@@ -274,8 +275,8 @@ export default function LeadDetailsPage() {
             ) : (
               comments.map((c: any, i: number) => (
                 <div key={i} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-brand flex-shrink-0 flex items-center justify-center text-black font-bold text-xs uppercase">
-                    {c.author[0]}
+                  <div className="w-8 h-8 rounded-full bg-brand flex-shrink-0 flex items-center justify-center text-black font-bold text-xs uppercase overflow-hidden">
+                    {c.authorAvatar ? <img src={c.authorAvatar} alt={c.author} className="w-full h-full object-cover" /> : c.author[0]}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

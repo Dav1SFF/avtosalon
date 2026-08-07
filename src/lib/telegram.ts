@@ -1,6 +1,6 @@
-export async function sendTelegramMessage(text: string, reply_markup?: any) {
+export async function sendTelegramMessage(text: string, reply_markup?: any, customChatId?: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const chatId = customChatId || process.env.TELEGRAM_CHAT_ID;
 
   if (!botToken || !chatId) {
     console.log("--- TELEGRAM NOTIFICATION (MOCK/CONSOLE LOG) ---");

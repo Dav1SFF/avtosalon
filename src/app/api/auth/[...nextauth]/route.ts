@@ -33,6 +33,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
               email: user.email,
               name: user.name,
               role: user.role,
+              avatar: user.avatar,
               originalAdminId: originalAdminId !== 'null' ? originalAdminId : undefined,
             };
           } catch(e) {
@@ -63,6 +64,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          avatar: user.avatar,
         };
       },
     }),
@@ -73,6 +75,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         token.id = user.id;
         token.role = (user as any).role;
         token.originalAdminId = (user as any).originalAdminId;
+        token.avatar = (user as any).avatar;
       }
       return token;
     },
@@ -81,6 +84,7 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).originalAdminId = token.originalAdminId;
+        (session.user as any).avatar = token.avatar;
       }
       return session;
     },

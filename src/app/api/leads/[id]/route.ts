@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import { logActivity } from "@/lib/logger";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -86,10 +87,27 @@ export async function PUT(request: Request, { params }: Props) {
       data,
       include: {
         assignedUsers: {
-          select: { id: true, name: true, avatar: true }
+          select: { id: true, name: true, avatar: true, telegramId: true }
         }
       }
     });
+
+    if (nextContactDate !== undefined && data.nextContactDate) {
+      const typeLabels: Record<string, string> = {
+        TRADE_IN: "🔄 Trade-In",
+        BUYBACK: "💰 Викуп",
+        BOOKING: "📅 Бронь",
+        CONTACT: "✉️ Зворотний зв'язок",
+      };
+
+      for (const user of updatedLead.assignedUsers) {
+        if (user.telegramId) {
+          const message = `🔔 Ви встановили нагадування для клієнта *${updatedLead.name}* (заявка: ${typeLabels[updatedLead.type] || updatedLead.type}).\n\nЯ нагадаю вам за 3 години, за 1 годину та за 10 хвилин до дзвінка.`;
+          // We don't await this to avoid slowing down the response
+          sendTelegramMessage(message, undefined, user.telegramId).catch(console.error);
+        }
+      }
+    }
 
     return NextResponse.json({ success: true, lead: updatedLead });
   } catch (error: any) {
