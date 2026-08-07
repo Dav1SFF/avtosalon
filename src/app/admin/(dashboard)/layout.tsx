@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { LayoutDashboard, Car, PhoneCall, Settings, LogOut, User, RefreshCw, Menu, X } from "lucide-react";
+import AccountSwitcher from "@/components/AccountSwitcher";
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -100,18 +101,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
           <div className="h-px bg-white/5" />
 
-          {/* User Meta */}
-          <div className="flex items-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
-            <div className="w-9 h-9 rounded-lg bg-brand/10 text-brand flex items-center justify-center font-bold">
-              {session.user?.name?.[0] || "A"}
-            </div>
-            <div className="min-w-0">
-              <span className="block text-xs font-bold text-white truncate">{session.user?.name}</span>
-              <span className="block text-[10px] text-text-gray/50 font-semibold truncate uppercase">
-                {(session.user as any).role || "Менеджер"}
-              </span>
-            </div>
-          </div>
+          {/* User Meta (Account Switcher) */}
+          <AccountSwitcher session={session} />
 
           {/* Sidebar links */}
           <nav className="space-y-1.5">
