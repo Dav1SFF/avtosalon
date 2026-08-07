@@ -77,7 +77,10 @@ export default function LeadDetailsPage() {
     fetchTeam();
   }, [id]);
 
-  const updateLead = async (data: any) => {
+  const updateLead = async (data: any, optimisticUpdater?: (prev: Lead) => Lead) => {
+    if (optimisticUpdater && lead) {
+      setLead(optimisticUpdater(lead));
+    }
     try {
       const res = await fetch(`/api/leads/${id}`, {
         method: "PUT",
@@ -89,34 +92,73 @@ export default function LeadDetailsPage() {
     } catch (error) {
       console.error(error);
       alert("Сталася помилка при оновленні.");
+      fetchLead(); // revert on error
     }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
-    updateLead({ comment: commentText });
+    if (!commentText.trim() || !session?.user) return;
+    
+    const newComment = {
+      text: commentText,
+      author: session.user.name || "Менеджер",
+      createdAt: new Date().toISOString()
+    };
+
+    updateLead({ comment: commentText }, (prev) => {
+      const existingComments = JSON.parse(prev.comments || "[]");
+      return { ...prev, comments: JSON.stringify([...existingComments, newComment]) };
+    });
     setCommentText("");
   };
 
   const handleAssignToMe = () => {
     if (!session?.user?.id) return;
-    updateLead({ assignUserId: session.user.id, status: lead?.status === "NEW" ? "IN_PROGRESS" : undefined });
+    const newStatus = lead?.status === "NEW" ? "IN_PROGRESS" : undefined;
+    const currentUserId = session.user.id as string;
+    const currentUserName = session.user.name as string;
+    const currentUserImage = session.user.image as string | null;
+    
+    updateLead(
+      { assignUserId: currentUserId, status: newStatus },
+      (prev) => ({ 
+        ...prev, 
+        status: newStatus || prev.status, 
+        assignedUsers: [...prev.assignedUsers, { id: currentUserId, name: currentUserName, avatar: currentUserImage }] 
+      })
+    );
   };
 
   const handleAssignUser = (userId: string) => {
-    updateLead({ assignUserId: userId, status: lead?.status === "NEW" ? "IN_PROGRESS" : undefined });
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+    const newStatus = lead?.status === "NEW" ? "IN_PROGRESS" : undefined;
+    updateLead(
+      { assignUserId: userId, status: newStatus },
+      (prev) => ({ 
+        ...prev, 
+        status: newStatus || prev.status, 
+        assignedUsers: [...prev.assignedUsers, user] 
+      })
+    );
     setShowUserSelect(false);
   };
 
   const handleUnassignMe = () => {
     if (!session?.user?.id) return;
-    updateLead({ unassignUserId: session.user.id });
+    updateLead(
+      { unassignUserId: session.user.id },
+      (prev) => ({ ...prev, assignedUsers: prev.assignedUsers.filter(u => u.id !== session.user?.id) })
+    );
   };
 
   const togglePublic = () => {
     if (!lead) return;
-    updateLead({ isPublic: !lead.isPublic });
+    updateLead(
+      { isPublic: !lead.isPublic },
+      (prev) => ({ ...prev, isPublic: !prev.isPublic })
+    );
   };
 
   if (loading) return <div className="h-full flex items-center justify-center text-white font-bold">Завантаження...</div>;
@@ -284,7 +326,7 @@ export default function LeadDetailsPage() {
               <div className="text-xs text-text-gray uppercase font-bold mb-2">Статус заявки</div>
               <select
                 value={lead.status}
-                onChange={(e) => updateLead({ status: e.target.value })}
+                onChange={(e) => updateLead({ status: e.target.value }, (prev) => ({ ...prev, status: e.target.value }))}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!isAdmin && !isAssignedToMe}
               >
@@ -367,7 +409,11 @@ export default function LeadDetailsPage() {
                         <span className="text-sm font-bold text-white">{user.name}</span>
                       </div>
                       {(user.id === session?.user?.id || isAdmin) && (
-                        <button onClick={() => updateLead({ unassignUserId: user.id })} className="text-red-500/50 hover:text-red-500 transition" title="Зняти відповідального">
+                        <button 
+                          onClick={() => updateLead({ unassignUserId: user.id }, (prev) => ({ ...prev, assignedUsers: prev.assignedUsers.filter(u => u.id !== user.id) }))} 
+                          className="text-red-500/50 hover:text-red-500 transition" 
+                          title="Зняти відповідального"
+                        >
                           <UserMinus className="w-4 h-4" />
                         </button>
                       )}

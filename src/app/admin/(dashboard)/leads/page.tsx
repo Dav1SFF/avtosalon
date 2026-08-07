@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X, Trash2, Edit2, GripVertical, List, LayoutGrid } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X, Trash2, Edit2, GripVertical, List, LayoutGrid, Search, Filter, SortDesc } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -38,6 +39,13 @@ export default function AdminLeadsPage() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNextContactDate, setEditNextContactDate] = useState("");
+
+  const { data: session } = useSession();
+  const [tab, setTab] = useState<"all" | "my">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "nextContact">("newest");
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -154,6 +162,36 @@ export default function AdminLeadsPage() {
     CONTACT: "Контакт",
   };
 
+  const filteredLeads = leads
+    .filter(lead => {
+      if (tab === "my") {
+        const isAssigned = lead.assignedUsers?.some(u => u.id === session?.user?.id);
+        if (!isAssigned) return false;
+      }
+      if (statusFilter !== "ALL" && lead.status !== statusFilter) return false;
+      if (typeFilter !== "ALL" && lead.type !== typeFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const details = JSON.parse(lead.details || "{}");
+        const matchName = lead.name.toLowerCase().includes(q);
+        const matchPhone = lead.phone.includes(q);
+        const matchCar = `${details.make || ""} ${details.model || ""} ${details.carName || ""}`.toLowerCase().includes(q);
+        if (!matchName && !matchPhone && !matchCar) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortBy === "nextContact") {
+        if (!a.nextContactDate && !b.nextContactDate) return 0;
+        if (!a.nextContactDate) return 1;
+        if (!b.nextContactDate) return -1;
+        return new Date(a.nextContactDate).getTime() - new Date(b.nextContactDate).getTime();
+      }
+      return 0;
+    });
+
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex justify-between items-center">
@@ -172,6 +210,63 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2 p-1 bg-white/5 border border-white/10 rounded-xl w-max">
+          <button 
+            onClick={() => setTab("all")} 
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === "all" ? "bg-brand text-black" : "text-white/70 hover:text-white"}`}
+          >
+            Всі заявки
+          </button>
+          <button 
+            onClick={() => setTab("my")} 
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === "my" ? "bg-brand text-black" : "text-white/70 hover:text-white"}`}
+          >
+            Мої заявки
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-3 bg-white/5 p-3 rounded-xl border border-white/10 items-center">
+          <div className="flex-1 min-w-[200px] relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+            <input 
+              type="text" 
+              placeholder="Пошук клієнта, телефону, авто..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand/50 transition"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-white/40" />
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand/50 transition">
+              <option value="ALL">Всі статуси</option>
+              {COLUMNS.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand/50 transition">
+              <option value="ALL">Всі типи</option>
+              <option value="TRADE_IN">Trade-In</option>
+              <option value="BUYBACK">Викуп</option>
+              <option value="BOOKING">Бронь</option>
+              <option value="CONTACT">Контакт</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <SortDesc className="w-4 h-4 text-white/40" />
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand/50 transition">
+              <option value="newest">Найновіші спочатку</option>
+              <option value="oldest">Найстаріші спочатку</option>
+              <option value="nextContact">За датою нагадування</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto relative min-h-[500px]">
         <table className="w-full text-left text-sm text-white whitespace-nowrap">
           <thead className="bg-white/5 text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
@@ -185,7 +280,7 @@ export default function AdminLeadsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {leads.map(lead => {
+            {filteredLeads.map(lead => {
               const details = JSON.parse(lead.details || "{}");
               const comments = JSON.parse(lead.comments || "[]");
               const col = COLUMNS.find(c => c.id === lead.status);
