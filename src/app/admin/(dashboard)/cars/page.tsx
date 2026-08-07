@@ -27,6 +27,7 @@ interface Car {
   buyPrice?: number | null;
   expenses?: number | null;
   expenseLog?: string | null;
+  createdByUser?: { name: string } | null;
 }
 
 export default function AdminCarsPage() {
@@ -539,6 +540,11 @@ export default function AdminCarsPage() {
                       <div>
                         <h2 className="text-xl font-extrabold text-white leading-tight">{car.make} {car.model}</h2>
                         <span className="text-xs text-text-gray font-semibold uppercase">{car.engine} • {car.transmission}</span>
+                        {car.createdByUser && (
+                          <span className="block mt-1 text-[10px] text-brand/80 uppercase font-bold tracking-wider">
+                            Додав(ла): {car.createdByUser.name}
+                          </span>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="block text-2xl font-black text-brand leading-none">{car.price.toLocaleString("uk-UA")} $</span>

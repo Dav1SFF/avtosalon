@@ -46,6 +46,7 @@ export async function GET(req: Request) {
       select: {
         id: true,
         soldById: true,
+        createdById: true,
         salePrice: true,
         buyPrice: true,
         expenses: true,
@@ -54,9 +55,20 @@ export async function GET(req: Request) {
       }
     });
 
+    const allCarsCreatedThisMonth = await prisma.car.findMany({
+      where: {
+        createdAt: carsFilter.soldAt ? carsFilter.soldAt : undefined
+      },
+      select: {
+        id: true,
+        createdById: true
+      }
+    });
+
     // Map sales to users
     const usersWithStats = users.map(user => {
       const userSales = soldCars.filter(car => car.soldById === user.id);
+      const userUploads = allCarsCreatedThisMonth.filter(car => car.createdById === user.id);
       
       let totalBonus = 0;
       userSales.forEach(car => {
@@ -72,6 +84,7 @@ export async function GET(req: Request) {
       return {
         ...user,
         salesCount: userSales.length,
+        uploadedCarsCount: userUploads.length,
         totalBonus: Math.round(totalBonus),
         sales: userSales
       };

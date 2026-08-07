@@ -14,6 +14,7 @@ interface UserStat {
   salary: number;
   commissionRate: number;
   salesCount: number;
+  uploadedCarsCount: number;
   totalBonus: number;
   avatar?: string;
   telegramId?: string;
@@ -282,6 +283,10 @@ export default function TeamPage() {
                       <div>
                         <div className="text-xs text-text-gray">Продано авто</div>
                         <div className="text-white font-black text-2xl">{user.salesCount}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-text-gray">Залито на сайт</div>
+                        <div className="text-white font-black text-2xl text-center">{user.uploadedCarsCount}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs text-text-gray">Бонус з продажів</div>

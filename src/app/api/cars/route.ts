@@ -75,6 +75,11 @@ export async function GET(request: Request) {
         orderBy,
         skip,
         take: limit,
+        include: {
+          createdByUser: {
+            select: { name: true }
+          }
+        }
       }),
       prisma.car.count({ where }),
     ]);
@@ -147,6 +152,7 @@ export async function POST(request: Request) {
         buyPrice: buyPrice ? parseInt(buyPrice) : null,
         expenses: expenses ? parseInt(expenses) : null,
         expenseLog: typeof expenseLog === "string" ? expenseLog : JSON.stringify(expenseLog || []),
+        createdById: userId || null,
       },
     });
 
