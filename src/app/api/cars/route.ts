@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const body = searchParams.get("body") || undefined;
     const color = searchParams.get("color") || undefined;
     const search = searchParams.get("search") || "";
+    const createdById = searchParams.get("createdById") || undefined;
     
     // Sort and Pagination
     const sortBy = searchParams.get("sortBy") || "createdAt";
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
     if (engine && engine !== "all") where.engine = { contains: engine };
     if (body && body !== "all") where.body = { equals: body };
     if (color) where.color = { equals: color };
+    if (createdById) where.createdById = { equals: createdById };
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.price = {};

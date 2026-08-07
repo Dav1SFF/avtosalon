@@ -43,6 +43,7 @@ export default function AdminCarsPage() {
   // Search and Sort
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
+  const [filterManager, setFilterManager] = useState("");
 
   // Session & Role
   const { data: session } = useSession();
@@ -198,7 +199,11 @@ export default function AdminCarsPage() {
   const fetchCars = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/cars?limit=100&includePending=true&search=${encodeURIComponent(searchQuery)}&sortBy=${sortBy}`);
+      let url = `/api/cars?limit=100&includePending=true&search=${encodeURIComponent(searchQuery)}&sortBy=${sortBy}`;
+      if (filterManager) {
+        url += `&createdById=${filterManager}`;
+      }
+      const res = await fetch(url);
       const data = await res.json();
       if (data.cars) {
         setCars(data.cars);
@@ -220,7 +225,7 @@ export default function AdminCarsPage() {
 
   useEffect(() => {
     fetchCars();
-  }, [searchQuery, sortBy]);
+  }, [searchQuery, sortBy, filterManager]);
 
   useEffect(() => {
     if (isAdmin) fetchManagers();
@@ -489,6 +494,19 @@ export default function AdminCarsPage() {
           <option value="yearDesc">Новий рік</option>
           <option value="mileageAsc">Менший пробіг</option>
         </select>
+        
+        {isAdmin && (
+          <select 
+            value={filterManager} 
+            onChange={(e) => setFilterManager(e.target.value)}
+            className="px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white focus:outline-none focus:border-brand transition sm:w-48"
+          >
+            <option value="">Всі менеджери</option>
+            {managers.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {loading ? (
