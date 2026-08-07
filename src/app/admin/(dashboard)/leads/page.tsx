@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X, Trash2, Edit2, GripVertical } from "lucide-react";
+import { PhoneCall, Calendar, RefreshCcw, Send, MessageSquare, Shield, Clock, HelpCircle, X, Trash2, Edit2, GripVertical, List, LayoutGrid } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -26,6 +26,7 @@ const COLUMNS = [
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   
   // Modals state
   const [commentModalOpen, setCommentModalOpen] = useState(false);
@@ -159,16 +160,33 @@ export default function AdminLeadsPage() {
           <span className="text-xs font-bold text-brand uppercase tracking-wider">Керування запитами клієнтів</span>
           <h1 className="text-3xl font-extrabold text-white mt-1 uppercase">CRM (Kanban)</h1>
         </div>
-        <button
-          onClick={fetchLeads}
-          className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
-        >
-          <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline font-bold">Оновити</span>
-        </button>
+        <div className="flex gap-2">
+          <div className="flex bg-white/5 rounded-xl border border-white/10 p-1">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`p-2 rounded-lg flex items-center justify-center transition ${viewMode === "kanban" ? "bg-brand text-black shadow-lg" : "text-text-gray hover:text-white"}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg flex items-center justify-center transition ${viewMode === "table" ? "bg-brand text-black shadow-lg" : "text-text-gray hover:text-white"}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            onClick={fetchLeads}
+            className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
+          >
+            <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline font-bold">Оновити</span>
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
+      {viewMode === "kanban" ? (
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4 h-[calc(100vh-160px)]">
         {COLUMNS.map((col) => {
           const columnLeads = leads.filter((l) => l.status === col.id);
           
@@ -270,7 +288,100 @@ export default function AdminLeadsPage() {
             </div>
           );
         })}
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto relative min-h-[500px]">
+          <table className="w-full text-left text-sm text-white whitespace-nowrap">
+            <thead className="bg-white/5 text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
+              <tr>
+                <th className="p-4">Статус</th>
+                <th className="p-4">Тип</th>
+                <th className="p-4">Клієнт / Телефон</th>
+                <th className="p-4 w-full">Деталі</th>
+                <th className="p-4">Дата / Нагадування</th>
+                <th className="p-4 text-right">Дії</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {leads.map(lead => {
+                const details = JSON.parse(lead.details || "{}");
+                const comments = JSON.parse(lead.comments || "[]");
+                const col = COLUMNS.find(c => c.id === lead.status);
+                
+                return (
+                  <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="p-4">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                        className={`text-[10px] font-bold uppercase tracking-wider bg-black/50 border border-white/10 rounded px-2 py-1 cursor-pointer appearance-none ${col?.headerText}`}
+                      >
+                        {COLUMNS.map(c => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
+                        {typeLabels[lead.type] || lead.type}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-bold">{lead.name}</div>
+                      <div className="text-brand text-xs font-mono mt-0.5">{lead.phone}</div>
+                    </td>
+                    <td className="p-4 text-text-gray text-xs truncate max-w-xs xl:max-w-md">
+                      {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make ? (
+                        <span>{details.make} {details.model} ({details.year})</span>
+                      ) : lead.type === "BOOKING" && details.carName ? (
+                        <span>{details.carName}</span>
+                      ) : (
+                        <span className="italic opacity-50">Немає деталей</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-xs">
+                      <div className="text-text-gray/50 mb-1">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</div>
+                      {lead.nextContactDate && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 font-semibold bg-yellow-400/10 px-1.5 py-0.5 rounded inline-flex">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(lead.nextContactDate).toLocaleString("uk-UA")}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-50 group-hover:opacity-100 transition">
+                        <button 
+                          onClick={() => {
+                            setActiveLead(lead);
+                            setCommentModalOpen(true);
+                          }}
+                          className="p-1.5 hover:bg-white/10 rounded text-brand flex items-center gap-1"
+                          title="Коментарі"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="text-[10px] font-bold">{comments.length}</span>
+                        </button>
+                        <button onClick={() => {
+                          setActiveLead(lead);
+                          setEditName(lead.name);
+                          setEditPhone(lead.phone);
+                          setEditNextContactDate(lead.nextContactDate ? new Date(lead.nextContactDate).toISOString().slice(0, 16) : "");
+                          setEditModalOpen(true);
+                        }} className="p-1.5 hover:bg-white/10 rounded text-text-gray hover:text-white" title="Редагувати">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteLead(lead.id)} className="p-1.5 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300" title="Видалити">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Comment Modal */}
       {commentModalOpen && activeLead && (
