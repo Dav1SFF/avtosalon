@@ -99,10 +99,23 @@ export async function PUT(request: Request, { params }: Props) {
         BOOKING: "📅 Бронь",
         CONTACT: "✉️ Зворотний зв'язок",
       };
+      
+      let reminderType = "Дзвінок";
+      if (data.details) {
+        try {
+          const parsed = JSON.parse(data.details);
+          if (parsed.reminderType) reminderType = parsed.reminderType;
+        } catch(e) {}
+      } else if (lead.details) {
+        try {
+          const parsed = JSON.parse(lead.details);
+          if (parsed.reminderType) reminderType = parsed.reminderType;
+        } catch(e) {}
+      }
 
       for (const user of updatedLead.assignedUsers) {
         if (user.telegramId) {
-          const message = `🔔 Ви встановили нагадування для клієнта *${updatedLead.name}* (заявка: ${typeLabels[updatedLead.type] || updatedLead.type}).\n\nЯ нагадаю вам за 3 години, за 1 годину та за 10 хвилин до дзвінка.`;
+          const message = `🔔 Ви встановили нагадування (${reminderType.toLowerCase()}) для клієнта *${updatedLead.name}* (заявка: ${typeLabels[updatedLead.type] || updatedLead.type}).\n\nЯ нагадаю вам за 3 години, за 1 годину та за 10 хвилин.`;
           // We don't await this to avoid slowing down the response
           sendTelegramMessage(message, undefined, user.telegramId).catch(console.error);
         }

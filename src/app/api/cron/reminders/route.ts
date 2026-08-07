@@ -58,6 +58,14 @@ export async function GET(request: Request) {
         reminderTimeText = "10 минут";
       }
 
+      let reminderType = "Дзвінок";
+      if (lead.details) {
+        try {
+          const parsed = JSON.parse(lead.details);
+          if (parsed.reminderType) reminderType = parsed.reminderType;
+        } catch(e) {}
+      }
+
       if (reminderTimeText) {
         // Fallback to domain if NEXT_PUBLIC_APP_URL is not set
         const domain = process.env.NEXT_PUBLIC_APP_URL || (request.headers.get("host") ? `https://${request.headers.get("host")}` : "https://avtosalon-puoe.vercel.app");
@@ -70,8 +78,8 @@ export async function GET(request: Request) {
           timeZone: "Europe/Kiev" 
         });
         
-        const message = `⏰ Напоминаю о звонке за *${reminderTimeText}* с клиентом *"${lead.name}"* по заявке "${typeLabels[lead.type] || lead.type}"\n\n` +
-                        `📞 Звонок будет в: *${timeStr}*\n` +
+        const message = `⏰ Напоминаю: запланировано *${reminderType.toLowerCase()}* за *${reminderTimeText}* с клиентом *"${lead.name}"* по заявке "${typeLabels[lead.type] || lead.type}"\n\n` +
+                        `🕒 Время: *${timeStr}*\n` +
                         `📱 Номер телефона: ${lead.phone}\n\n` +
                         `🔗 Ссылка на заявку: ${leadUrl}`;
 
