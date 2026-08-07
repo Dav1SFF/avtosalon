@@ -439,105 +439,130 @@ export default function AdminCarsPage() {
           Немає доданих автомобілів. Натисніть кнопку вище, щоб додати перше авто.
         </div>
       ) : (
-        <div className="glass rounded-[24px] border border-white/5 overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-black/10 text-xs text-text-gray uppercase tracking-wider font-semibold">
-                  <th className="p-5">Автомобіль</th>
-                  <th className="p-5">Рік / Пробіг</th>
-                  <th className="p-5">Ціна</th>
-                  <th className="p-5">Статус на сайті</th>
-                  <th className="p-5 text-right">Дії</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-sm">
-                {cars.map((car) => {
-                  let imgs = [];
-                  try {
-                    imgs = typeof car.images === 'string' ? JSON.parse(car.images) : car.images;
-                  } catch(e) {}
-                  const firstImg = (imgs && imgs.length > 0) ? imgs[0] : "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800";
-                  return (
-                    <tr key={car.id} className={`hover:bg-white/1 ${car.status === 'PENDING' ? 'bg-orange-500/5' : ''}`}>
-                      <td className="p-5">
-                        <div className="flex items-center gap-4">
-                          <div className="relative w-16 aspect-[16/10] rounded-lg overflow-hidden shrink-0 bg-black/40">
-                            <Image src={firstImg} alt={car.model || "Car"} fill className="object-cover" />
-                          </div>
-                          <div>
-                            <span className="block text-white font-bold text-sm leading-snug">{car.make} {car.model}</span>
-                            <span className="block text-[10px] text-text-gray/50 font-semibold uppercase mt-0.5">{car.engine}  •  {car.transmission}</span>
-                          </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {cars.map((car) => {
+            let imgs = [];
+            try {
+              imgs = typeof car.images === 'string' ? JSON.parse(car.images) : car.images;
+            } catch(e) {}
+            const firstImg = (imgs && imgs.length > 0) ? imgs[0] : "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800";
+            
+            // Calculate Financials for Admin
+            let margin = null;
+            if (isAdmin && car.buyPrice) {
+              margin = car.price - car.buyPrice - (car.expenses || 0);
+            }
+
+            return (
+              <div key={car.id} className={`glass rounded-[24px] border border-white/5 overflow-hidden flex flex-col hover:border-brand/30 transition shadow-2xl ${car.status === 'PENDING' ? 'ring-1 ring-orange-500/50' : ''}`}>
+                <div className="flex flex-col sm:flex-row p-6 gap-6">
+                  {/* Image */}
+                  <div className="relative w-full sm:w-48 aspect-[16/10] sm:aspect-square rounded-2xl overflow-hidden shrink-0 bg-black/40">
+                    <Image src={firstImg} alt={car.model || "Car"} fill className="object-cover" />
+                    <div className="absolute top-2 right-2">
+                      <select
+                        value={car.status}
+                        onChange={(e) => handleStatusChange(car.id, e.target.value)}
+                        className={`py-1 px-2 text-[10px] uppercase font-bold tracking-wider rounded-lg border-0 appearance-none shadow-lg backdrop-blur-md cursor-pointer ${car.status === 'PENDING' ? 'bg-orange-500/90 text-white' : car.status === 'SOLD' ? 'bg-black/80 text-text-gray' : 'bg-brand/90 text-background'}`}
+                      >
+                        <option value="PENDING">Очікує</option>
+                        <option value="IN_STOCK">В наявності</option>
+                        <option value="BOOKED">Бронь</option>
+                        <option value="SOLD">Продано</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h2 className="text-xl font-extrabold text-white leading-tight">{car.make} {car.model}</h2>
+                        <span className="text-xs text-text-gray font-semibold uppercase">{car.engine} • {car.transmission}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-2xl font-black text-brand leading-none">{car.price.toLocaleString("uk-UA")} $</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4 mt-2">
+                      <div>
+                        <span className="block text-[10px] text-text-gray uppercase font-bold tracking-wider mb-1">Рік</span>
+                        <span className="block text-sm font-semibold text-white">{car.year}</span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-text-gray uppercase font-bold tracking-wider mb-1">Пробіг</span>
+                        <span className="block text-sm font-semibold text-white">{(car.mileage / 1000).toFixed(0)} тис. км</span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-text-gray uppercase font-bold tracking-wider mb-1">Привід</span>
+                        <span className="block text-sm font-semibold text-white truncate max-w-[80px]">{car.drive}</span>
+                      </div>
+                    </div>
+
+                    {/* Admin Financials Inline */}
+                    {isAdmin && (
+                      <div className="mt-auto pt-4 flex gap-3">
+                        <div className="flex-1 bg-black/20 rounded-xl p-3 border border-white/5">
+                          <span className="block text-[9px] text-text-gray uppercase font-bold tracking-wider mb-0.5">Собівартість (Викуп + Витрати)</span>
+                          <span className="block text-sm font-bold text-white">
+                            {car.buyPrice ? `$${(car.buyPrice + (car.expenses || 0)).toLocaleString("uk-UA")}` : "Не вказано"}
+                          </span>
                         </div>
-                      </td>
-                      <td className="p-5">
-                        <span className="block text-white font-semibold">{car.year} р.</span>
-                        <span className="block text-xs text-text-gray">{(car.mileage / 1000).toFixed(0)} тис. км</span>
-                      </td>
-                      <td className="p-5">
-                        <span className="text-brand font-bold text-base">{car.price.toLocaleString("uk-UA")} $</span>
-                      </td>
-                      <td className="p-5">
-                        <select
-                          value={car.status}
-                          onChange={(e) => handleStatusChange(car.id, e.target.value)}
-                          className={`premium-input py-1 px-3 text-xs border-white/5 font-semibold appearance-none ${car.status === 'PENDING' ? 'bg-orange-500/20 text-orange-400 border-orange-500/50' : 'bg-black/20'}`}
-                        >
-                          <option value="PENDING">Очікує підтвердження</option>
-                          <option value="IN_STOCK">В наявності</option>
-                          <option value="BOOKED">Заброньовано</option>
-                          <option value="SOLD">Продано</option>
-                        </select>
-                      </td>
-                      <td className="p-5 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/catalog/${car.id}`}
-                            target="_blank"
-                            className="p-2.5 rounded-lg bg-white/5 hover:bg-brand hover:text-background text-white transition"
-                            title="Переглянути на сайті"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            href={`/admin/story/${car.id}`}
-                            target="_blank"
-                            className="p-2.5 rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-500 text-white transition hover:scale-105 shadow-lg"
-                            title="Instagram Story"
-                          >
-                            <Smartphone className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            href={`/admin/print/${car.id}`}
-                            target="_blank"
-                            className="p-2.5 rounded-lg bg-white/5 hover:bg-green-500/10 text-green-400 transition"
-                            title="Друк цінника"
-                          >
-                            <Printer className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleEditClick(car)}
-                            className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white transition"
-                            title="Редагувати"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCar(car.id)}
-                            className="p-2.5 rounded-lg bg-white/5 hover:bg-red-500/10 text-red-400 transition"
-                            title="Видалити"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <div className={`flex-1 rounded-xl p-3 border ${margin !== null && margin > 0 ? 'bg-green-500/10 border-green-500/20' : 'bg-black/20 border-white/5'}`}>
+                          <span className="block text-[9px] text-text-gray uppercase font-bold tracking-wider mb-0.5">Очікуваний Прибуток</span>
+                          <span className={`block text-sm font-bold ${margin !== null && margin > 0 ? 'text-green-400' : 'text-white'}`}>
+                            {margin !== null ? `$${margin.toLocaleString("uk-UA")}` : "—"}
+                          </span>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions Bottom Bar */}
+                <div className="mt-auto bg-black/20 border-t border-white/5 p-4 flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/catalog/${car.id}`}
+                      target="_blank"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> На сайт
+                    </Link>
+                    <Link
+                      href={`/admin/story/${car.id}`}
+                      target="_blank"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-tr from-yellow-500/20 to-purple-500/20 hover:from-yellow-500 hover:to-purple-500 text-white text-xs font-semibold transition border border-white/5"
+                    >
+                      <Smartphone className="w-3.5 h-3.5" /> Story
+                    </Link>
+                    <Link
+                      href={`/admin/print/${car.id}`}
+                      target="_blank"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-green-500/10 hover:text-green-400 text-white text-xs font-semibold transition"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Друк
+                    </Link>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditClick(car)}
+                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-brand/10 hover:bg-brand hover:text-background text-brand text-xs font-bold uppercase tracking-wider transition"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Редаг.
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCar(car.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-gray hover:text-red-400 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
