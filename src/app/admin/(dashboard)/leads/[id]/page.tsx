@@ -39,6 +39,8 @@ export default function LeadDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [showUserSelect, setShowUserSelect] = useState(false);
 
   const fetchLead = async () => {
     setLoading(true);
@@ -58,8 +60,21 @@ export default function LeadDetailsPage() {
     }
   };
 
+  const fetchTeam = async () => {
+    try {
+      const res = await fetch("/api/team");
+      if (res.ok) {
+        const data = await res.json();
+        setAllUsers(data.users);
+      }
+    } catch (e) {
+      console.error("Failed to fetch team", e);
+    }
+  };
+
   useEffect(() => {
     fetchLead();
+    fetchTeam();
   }, [id]);
 
   const updateLead = async (data: any) => {
@@ -87,6 +102,11 @@ export default function LeadDetailsPage() {
   const handleAssignToMe = () => {
     if (!session?.user?.id) return;
     updateLead({ assignUserId: session.user.id, status: lead?.status === "NEW" ? "IN_PROGRESS" : undefined });
+  };
+
+  const handleAssignUser = (userId: string) => {
+    updateLead({ assignUserId: userId, status: lead?.status === "NEW" ? "IN_PROGRESS" : undefined });
+    setShowUserSelect(false);
   };
 
   const handleUnassignMe = () => {
@@ -288,13 +308,41 @@ export default function LeadDetailsPage() {
 
             {/* Assignees */}
             <div>
-              <div className="text-xs text-text-gray uppercase font-bold mb-2 flex justify-between items-center">
+              <div className="text-xs text-text-gray uppercase font-bold mb-2 flex justify-between items-center relative">
                 Відповідальні
-                {!isAssignedToMe && (
-                  <button onClick={handleAssignToMe} className="text-brand hover:underline flex items-center gap-1">
-                    <UserPlus className="w-3 h-3" /> Взяти в роботу
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {!isAssignedToMe && (
+                    <button onClick={handleAssignToMe} className="text-brand hover:underline flex items-center gap-1">
+                      <UserPlus className="w-3 h-3" /> Взяти в роботу
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <div className="relative">
+                      <button onClick={() => setShowUserSelect(!showUserSelect)} className="text-text-gray hover:text-white flex items-center gap-1 ml-2">
+                        + Додати
+                      </button>
+                      {showUserSelect && (
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl z-20 overflow-hidden">
+                          {allUsers.filter(u => !lead.assignedUsers.find(a => a.id === u.id)).map(user => (
+                            <button
+                              key={user.id}
+                              onClick={() => handleAssignUser(user.id)}
+                              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 flex items-center gap-2"
+                            >
+                              <div className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] uppercase font-bold overflow-hidden">
+                                {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /> : user.name[0]}
+                              </div>
+                              {user.name}
+                            </button>
+                          ))}
+                          {allUsers.filter(u => !lead.assignedUsers.find(a => a.id === u.id)).length === 0 && (
+                            <div className="px-3 py-2 text-xs text-text-gray italic">Немає доступних менеджерів</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               {lead.assignedUsers.length === 0 ? (
@@ -311,8 +359,8 @@ export default function LeadDetailsPage() {
                         </div>
                         <span className="text-sm font-bold text-white">{user.name}</span>
                       </div>
-                      {user.id === session?.user?.id && (
-                        <button onClick={handleUnassignMe} className="text-red-500/50 hover:text-red-500 transition" title="Відмовитись">
+                      {(user.id === session?.user?.id || isAdmin) && (
+                        <button onClick={() => updateLead({ unassignUserId: user.id })} className="text-red-500/50 hover:text-red-500 transition" title="Зняти відповідального">
                           <UserMinus className="w-4 h-4" />
                         </button>
                       )}
