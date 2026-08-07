@@ -75,6 +75,7 @@ export default function AdminCarsPage() {
 
   // Image Upload State
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [draggedImgIdx, setDraggedImgIdx] = useState<number | null>(null);
 
   // AI & VIN States
   const [vinInput, setVinInput] = useState("");
@@ -669,10 +670,9 @@ export default function AdminCarsPage() {
                   <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-5">
                     <div>
                       <span className="block text-white font-bold text-xs uppercase tracking-wider mb-3">Специфікації</span>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <input type="text" placeholder="Об'єм: 1998 см³" value={engineVol} onChange={(e) => setEngineVol(e.target.value)} className="premium-input text-[11px]" />
                         <input type="text" placeholder="Потужність: 258 к.с." value={power} onChange={(e) => setPower(e.target.value)} className="premium-input text-[11px]" />
-                        <input type="text" placeholder="Розгін: 5.8 с" value={acceleration} onChange={(e) => setAcceleration(e.target.value)} className="premium-input text-[11px]" />
                         <input type="text" placeholder="Витрата: 7.2 л/100км" value={consumption} onChange={(e) => setConsumption(e.target.value)} className="premium-input text-[11px]" />
                       </div>
                     </div>
@@ -714,8 +714,27 @@ export default function AdminCarsPage() {
                       return parsedUrls.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
                           {parsedUrls.map((url, i) => (
-                            <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-black/40 group border border-white/10">
-                              <Image src={url} alt={`img-${i}`} fill className="object-cover" />
+                            <div 
+                              key={i} 
+                              className={`relative aspect-square rounded-lg overflow-hidden bg-black/40 group border ${draggedImgIdx === i ? 'border-brand opacity-50' : 'border-white/10'} cursor-grab active:cursor-grabbing hover:border-white/30 transition`}
+                              draggable
+                              onDragStart={() => setDraggedImgIdx(i)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                if (draggedImgIdx === null || draggedImgIdx === i) return;
+                                const newUrls = [...parsedUrls];
+                                const item = newUrls.splice(draggedImgIdx, 1)[0];
+                                newUrls.splice(i, 0, item);
+                                setImageUrls(newUrls.join("\n"));
+                                setDraggedImgIdx(null);
+                              }}
+                              onDragEnd={() => setDraggedImgIdx(null)}
+                            >
+                              <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md z-10 font-bold">
+                                {i + 1}
+                              </div>
+                              <Image src={url} alt={`img-${i}`} fill className="object-cover pointer-events-none" />
                               <button 
                                 type="button"
                                 onClick={() => {
@@ -723,7 +742,7 @@ export default function AdminCarsPage() {
                                   newUrls.splice(i, 1);
                                   setImageUrls(newUrls.join("\n"));
                                 }}
-                                className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded hover:bg-red-500 opacity-0 group-hover:opacity-100 transition backdrop-blur-md"
+                                className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded hover:bg-red-500 opacity-0 group-hover:opacity-100 transition backdrop-blur-md z-10"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -739,7 +758,7 @@ export default function AdminCarsPage() {
 
                     <div className="mt-2">
                       <label className="text-[9px] text-text-gray uppercase font-semibold mb-1 block">Ручне введення URL (з нового рядка)</label>
-                      <textarea rows={2} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input text-[10px] resize-none opacity-50 focus:opacity-100" placeholder="https://..." />
+                      <textarea rows={6} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input text-[10px] resize-none opacity-50 focus:opacity-100" placeholder="https://..." />
                     </div>
                   </div>
 
