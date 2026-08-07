@@ -28,7 +28,6 @@ const COLUMNS = [
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   
   // Modals state
   const [commentModalOpen, setCommentModalOpen] = useState(false);
@@ -163,20 +162,6 @@ export default function AdminLeadsPage() {
           <h1 className="text-3xl font-extrabold text-white mt-1 uppercase">CRM (Kanban)</h1>
         </div>
         <div className="flex gap-2">
-          <div className="flex bg-white/5 rounded-xl border border-white/10 p-1">
-            <button
-              onClick={() => setViewMode("kanban")}
-              className={`p-2 rounded-lg flex items-center justify-center transition ${viewMode === "kanban" ? "bg-brand text-black shadow-lg" : "text-text-gray hover:text-white"}`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg flex items-center justify-center transition ${viewMode === "table" ? "bg-brand text-black shadow-lg" : "text-text-gray hover:text-white"}`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
           <button
             onClick={fetchLeads}
             className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
@@ -187,192 +172,86 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
-      {viewMode === "kanban" ? (
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4 h-[calc(100vh-160px)]">
-        {COLUMNS.map((col) => {
-          const columnLeads = leads.filter((l) => l.status === col.id);
-          
-          return (
-            <div
-              key={col.id}
-              className={`flex flex-col rounded-2xl border ${col.color} p-4 min-h-[500px] h-full`}
-              onDrop={(e) => handleDrop(e, col.id)}
-              onDragOver={handleDragOver}
-            >
-              <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                <h3 className={`font-extrabold uppercase tracking-wider text-sm ${col.headerText}`}>
-                  {col.title}
-                </h3>
-                <span className="bg-black/30 text-white text-xs px-2 py-1 rounded-md font-mono">
-                  {columnLeads.length}
-                </span>
-              </div>
-
-              <div className="flex-1 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
-                {columnLeads.map((lead) => {
-                  const details = JSON.parse(lead.details || "{}");
-                  const comments = JSON.parse(lead.comments || "[]");
-                  
-                  return (
-                    <div
-                      key={lead.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, lead.id)}
-                      className="bg-black/40 border border-white/10 rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-brand/50 transition-colors"
+      <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto relative min-h-[500px]">
+        <table className="w-full text-left text-sm text-white whitespace-nowrap">
+          <thead className="bg-white/5 text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
+            <tr>
+              <th className="p-4">Статус</th>
+              <th className="p-4">Тип</th>
+              <th className="p-4">Клієнт / Телефон</th>
+              <th className="p-4 w-full">Деталі</th>
+              <th className="p-4">Дата / Нагадування</th>
+              <th className="p-4 text-right">Дії</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {leads.map(lead => {
+              const details = JSON.parse(lead.details || "{}");
+              const comments = JSON.parse(lead.comments || "[]");
+              const col = COLUMNS.find(c => c.id === lead.status);
+              
+              return (
+                <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="p-4">
+                    <select
+                      value={lead.status}
+                      onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                      className={`text-[10px] font-bold uppercase tracking-wider bg-black/50 border border-white/10 rounded px-2 py-1 cursor-pointer appearance-none ${col?.headerText}`}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex gap-2 items-center">
-                          <GripVertical className="w-4 h-4 text-white/20" />
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
-                            {typeLabels[lead.type] || lead.type}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          {lead.assignedUsers && lead.assignedUsers.length > 0 && (
-                            <div className="flex -space-x-2 mr-2">
-                              {lead.assignedUsers.map((u) => (
-                                <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
-                                  {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
-                                </div>
-                              ))}
+                      {COLUMNS.map(c => (
+                        <option key={c.id} value={c.id}>{c.title}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-4">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
+                      {typeLabels[lead.type] || lead.type}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="font-bold">{lead.name}</div>
+                    <div className="text-brand text-xs font-mono mt-0.5">{lead.phone}</div>
+                  </td>
+                  <td className="p-4 text-text-gray text-xs truncate max-w-xs xl:max-w-md">
+                    {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make ? (
+                      <span>{details.make} {details.model} ({details.year})</span>
+                    ) : lead.type === "BOOKING" && details.carName ? (
+                      <span>{details.carName}</span>
+                    ) : (
+                      <span className="italic opacity-50">Немає деталей</span>
+                    )}
+                  </td>
+                  <td className="p-4 text-xs">
+                    <div className="text-text-gray/50 mb-1">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</div>
+                    {lead.nextContactDate && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 font-semibold bg-yellow-400/10 px-1.5 py-0.5 rounded inline-flex">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(lead.nextContactDate).toLocaleString("uk-UA")}
+                      </div>
+                    )}
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-50 group-hover:opacity-100 transition">
+                      {lead.assignedUsers && lead.assignedUsers.length > 0 && (
+                        <div className="flex -space-x-2 mr-2">
+                          {lead.assignedUsers.map((u) => (
+                            <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
+                              {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
                             </div>
-                          )}
-                          <a href={`/admin/leads/${lead.id}`} className="p-1 hover:bg-brand/20 rounded text-brand font-bold text-[10px] uppercase flex items-center gap-1 transition">
-                            Відкрити
-                          </a>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-white text-sm">{lead.name}</h4>
-                        <p className="text-brand font-mono text-xs">{lead.phone}</p>
-                      </div>
-
-                      {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make && (
-                        <div className="mt-2 text-xs bg-white/5 p-1.5 rounded text-text-gray">
-                          {details.make} {details.model} ({details.year})
+                          ))}
                         </div>
                       )}
-                      
-                      {lead.type === "BOOKING" && details.carName && (
-                        <div className="mt-2 text-xs bg-white/5 p-1.5 rounded text-text-gray">
-                          {details.carName}
-                        </div>
-                      )}
-
-                      {lead.nextContactDate && (
-                        <div className="mt-3 flex items-center gap-1.5 text-[10px] text-yellow-400 font-semibold bg-yellow-400/10 p-1.5 rounded">
-                          <Calendar className="w-3 h-3" />
-                          Перетелефонувати: {new Date(lead.nextContactDate).toLocaleString("uk-UA")}
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex justify-between items-center border-t border-white/5 pt-2">
-                        <span className="text-[9px] text-text-gray/50">
-                          {new Date(lead.createdAt).toLocaleDateString("uk-UA")}
-                        </span>
-                        
-                        <button 
-                          onClick={() => {
-                            setActiveLead(lead);
-                            setCommentModalOpen(true);
-                          }}
-                          className="flex items-center gap-1 text-[10px] text-brand hover:underline font-bold"
-                        >
-                          <MessageSquare className="w-3 h-3" />
-                          {comments.length}
-                        </button>
-                      </div>
+                      <a href={`/admin/leads/${lead.id}`} className="text-brand hover:underline font-bold text-xs uppercase transition">
+                        Відкрити заявку
+                      </a>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-        </div>
-      ) : (
-        <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto relative min-h-[500px]">
-          <table className="w-full text-left text-sm text-white whitespace-nowrap">
-            <thead className="bg-white/5 text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
-              <tr>
-                <th className="p-4">Статус</th>
-                <th className="p-4">Тип</th>
-                <th className="p-4">Клієнт / Телефон</th>
-                <th className="p-4 w-full">Деталі</th>
-                <th className="p-4">Дата / Нагадування</th>
-                <th className="p-4 text-right">Дії</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {leads.map(lead => {
-                const details = JSON.parse(lead.details || "{}");
-                const comments = JSON.parse(lead.comments || "[]");
-                const col = COLUMNS.find(c => c.id === lead.status);
-                
-                return (
-                  <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-4">
-                      <select
-                        value={lead.status}
-                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                        className={`text-[10px] font-bold uppercase tracking-wider bg-black/50 border border-white/10 rounded px-2 py-1 cursor-pointer appearance-none ${col?.headerText}`}
-                      >
-                        {COLUMNS.map(c => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
-                        {typeLabels[lead.type] || lead.type}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-bold">{lead.name}</div>
-                      <div className="text-brand text-xs font-mono mt-0.5">{lead.phone}</div>
-                    </td>
-                    <td className="p-4 text-text-gray text-xs truncate max-w-xs xl:max-w-md">
-                      {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make ? (
-                        <span>{details.make} {details.model} ({details.year})</span>
-                      ) : lead.type === "BOOKING" && details.carName ? (
-                        <span>{details.carName}</span>
-                      ) : (
-                        <span className="italic opacity-50">Немає деталей</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-xs">
-                      <div className="text-text-gray/50 mb-1">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</div>
-                      {lead.nextContactDate && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 font-semibold bg-yellow-400/10 px-1.5 py-0.5 rounded inline-flex">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(lead.nextContactDate).toLocaleString("uk-UA")}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-3 opacity-50 group-hover:opacity-100 transition">
-                        {lead.assignedUsers && lead.assignedUsers.length > 0 && (
-                          <div className="flex -space-x-2 mr-2">
-                            {lead.assignedUsers.map((u) => (
-                              <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
-                                {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <a href={`/admin/leads/${lead.id}`} className="text-brand hover:underline font-bold text-xs uppercase transition">
-                          Відкрити заявку
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {/* Comment Modal */}
       {commentModalOpen && activeLead && (
