@@ -42,8 +42,8 @@ export default function LeadDetailsPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [showUserSelect, setShowUserSelect] = useState(false);
 
-  const fetchLead = async () => {
-    setLoading(true);
+  const fetchLead = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await fetch(`/api/leads/${id}`);
       if (!res.ok) {
@@ -56,7 +56,7 @@ export default function LeadDetailsPage() {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -88,11 +88,11 @@ export default function LeadDetailsPage() {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Помилка оновлення");
-      fetchLead();
+      fetchLead(false);
     } catch (error) {
       console.error(error);
       alert("Сталася помилка при оновленні.");
-      fetchLead(); // revert on error
+      fetchLead(false); // revert on error
     }
   };
 

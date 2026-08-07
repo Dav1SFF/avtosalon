@@ -47,8 +47,8 @@ export default function AdminLeadsPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "nextContact">("newest");
 
-  const fetchLeads = async () => {
-    setLoading(true);
+  const fetchLeads = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await fetch("/api/leads");
       const data = await res.json();
@@ -58,7 +58,7 @@ export default function AdminLeadsPage() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -75,9 +75,10 @@ export default function AdminLeadsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      fetchLeads(false);
     } catch (err) {
       console.error(err);
-      fetchLeads(); // Revert on error
+      fetchLeads(false); // Revert on error
     }
   };
 
@@ -201,7 +202,7 @@ export default function AdminLeadsPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={fetchLeads}
+            onClick={() => fetchLeads(true)}
             className="p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand text-white transition flex items-center gap-2"
           >
             <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
