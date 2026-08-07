@@ -155,20 +155,23 @@ export default function ExpensesPage() {
 
   const totalAmount = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
-  const downloadCSV = () => {
-    const headers = ["Дата", "Категорія", "Коментар", "Сума"];
-    const rows = expenses.map(e => [
-      format(new Date(e.date), "dd.MM.yyyy"),
-      e.category,
-      `"${e.note.replace(/"/g, '""')}"`, // escape quotes
-      e.amount
-    ]);
-    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `expenses_${month}_${year}.csv`;
-    link.click();
+  const downloadExcel = () => {
+    const data = [
+      ["Дата", "Категорія", "Коментар", "Сума"],
+      ...expenses.map(e => [
+        format(new Date(e.date), "dd.MM.yyyy"),
+        e.category,
+        e.note,
+        e.amount
+      ])
+    ];
+
+    import('xlsx').then(XLSX => {
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Витрати");
+      XLSX.writeFile(workbook, `expenses_${month}_${year}.xlsx`);
+    });
   };
 
   return (
@@ -215,8 +218,8 @@ export default function ExpensesPage() {
               ))}
             </select>
             
-            <button onClick={downloadCSV} className="ml-4 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition text-white uppercase tracking-wider">
-              <Download className="w-4 h-4 text-brand" /> Експорт CSV
+            <button onClick={downloadExcel} className="ml-4 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition text-white uppercase tracking-wider">
+              <Download className="w-4 h-4 text-brand" /> Експорт в Excel
             </button>
 
             <div className="ml-auto flex items-center gap-2 text-brand font-black text-xl">

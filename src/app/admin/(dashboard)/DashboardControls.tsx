@@ -27,9 +27,9 @@ export default function DashboardControls({ stats, initialMonth, initialYear }: 
     router.push(`/admin?${params.toString()}`);
   };
 
-  const downloadCSV = () => {
-    const headers = ["Показник", "Значення"];
-    const rows = [
+  const downloadExcel = () => {
+    const data = [
+      ["Показник", "Значення"],
       ["Автомобілів в наявності", stats.totalCars],
       ["Нових заявок", stats.activeLeads],
       ["Відгуків", stats.totalReviews],
@@ -41,12 +41,13 @@ export default function DashboardControls({ stats, initialMonth, initialYear }: 
       ["Чистий Прибуток (P&L) ($)", stats.netProfit],
     ];
     
-    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `statistics_${month}_${year}.csv`;
-    link.click();
+    // Import dynamically so it doesn't break SSR
+    import('xlsx').then(XLSX => {
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Статистика");
+      XLSX.writeFile(workbook, `statistics_${month}_${year}.xlsx`);
+    });
   };
 
   return (
@@ -73,10 +74,10 @@ export default function DashboardControls({ stats, initialMonth, initialYear }: 
       </div>
       
       <button 
-        onClick={downloadCSV} 
+        onClick={downloadExcel} 
         className="md:ml-auto w-full md:w-auto flex items-center justify-center gap-2 text-xs font-bold bg-brand hover:bg-brand-hover px-6 py-3 rounded-xl transition text-background uppercase tracking-wider"
       >
-        <Download className="w-4 h-4" /> Експорт статистики CSV
+        <Download className="w-4 h-4" /> Експорт в Excel
       </button>
     </div>
   );
