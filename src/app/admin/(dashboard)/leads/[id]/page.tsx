@@ -250,20 +250,26 @@ export default function LeadDetailsPage() {
           </div>
 
           <div className="p-4 bg-black/60 border-t border-white/10">
-            <form onSubmit={handleAddComment} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Введіть коментар..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand transition"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                required
-              />
-              <button type="submit" className="bg-brand text-black p-3 rounded-xl hover:bg-brand/80 transition flex items-center justify-center font-bold gap-2">
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Надіслати</span>
-              </button>
-            </form>
+            {isAdmin || isAssignedToMe ? (
+              <form onSubmit={handleAddComment} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Введіть коментар..."
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-brand transition"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  required
+                />
+                <button type="submit" className="bg-brand text-black p-3 rounded-xl hover:bg-brand/80 transition flex items-center justify-center font-bold gap-2">
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Надіслати</span>
+                </button>
+              </form>
+            ) : (
+              <div className="text-center text-xs text-text-gray/50 italic py-2">
+                Тільки адміністратори та відповідальні менеджери можуть залишати коментарі.
+              </div>
+            )}
           </div>
         </div>
 
@@ -279,7 +285,8 @@ export default function LeadDetailsPage() {
               <select
                 value={lead.status}
                 onChange={(e) => updateLead({ status: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold cursor-pointer"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isAdmin && !isAssignedToMe}
               >
                 <option value="NEW">🆕 Нова</option>
                 <option value="IN_PROGRESS">⏳ В процесі</option>
