@@ -57,6 +57,15 @@ export async function PUT(request: Request, { params }: Props) {
     if (body.serviceHistory !== undefined) {
       updateData.serviceHistory = typeof body.serviceHistory === "string" ? body.serviceHistory : JSON.stringify(body.serviceHistory);
     }
+    if (body.buyPrice !== undefined) {
+      updateData.buyPrice = body.buyPrice !== null ? parseInt(body.buyPrice) : null;
+    }
+    if (body.expenses !== undefined) {
+      updateData.expenses = body.expenses !== null ? parseInt(body.expenses) : null;
+    }
+    if (body.source !== undefined) {
+      updateData.source = body.source;
+    }
 
     const updatedCar = await prisma.car.update({
       where: { id },

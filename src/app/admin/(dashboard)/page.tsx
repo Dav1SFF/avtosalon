@@ -1,14 +1,14 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
 import AdminChart from "@/components/AdminChart";
-import { Car, PhoneCall, Star, FileText, ArrowUpRight } from "lucide-react";
+import { Car, PhoneCall, Star, FileText, ArrowUpRight, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 export const revalidate = 0; // Dynamic view
 
 export default async function AdminDashboardPage() {
   // Query database statistics
-  const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount] = await Promise.all([
+  const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount, soldCars] = await Promise.all([
     prisma.car.count(),
     prisma.lead.count({ where: { status: "NEW" } }),
     prisma.review.count(),
@@ -16,7 +16,15 @@ export default async function AdminDashboardPage() {
     prisma.lead.count({ where: { type: "BUYBACK" } }),
     prisma.lead.count({ where: { type: "BOOKING" } }),
     prisma.lead.count({ where: { type: "CONTACT" } }),
+    prisma.car.findMany({ where: { status: "SOLD" } }),
   ]);
+
+  const totalMargin = soldCars.reduce((acc, car) => {
+    if (car.price && car.buyPrice) {
+      return acc + (car.price - car.buyPrice - (car.expenses || 0));
+    }
+    return acc;
+  }, 0);
 
   // Fetch recent leads
   const recentLeads = await prisma.lead.findMany({
@@ -46,7 +54,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         
         {/* Total Cars */}
         <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
@@ -81,7 +89,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Conversion placeholder */}
+        {/* Total Requests */}
         <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
           <div>
             <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block">Всього запитів</span>
@@ -91,6 +99,19 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="w-12 h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
             <FileText className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Total Margin */}
+        <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
+          <div>
+            <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block text-brand">Прибуток</span>
+            <span className="text-2xl font-extrabold text-white mt-2 block font-mono">
+              ${totalMargin.toLocaleString("en-US")}
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center">
+            <DollarSign className="w-6 h-6" />
           </div>
         </div>
 

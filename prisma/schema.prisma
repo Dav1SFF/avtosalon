@@ -44,6 +44,9 @@ model Car {
   views          Int      @default(0)
   seoTitle       String?
   seoDescription String?
+  buyPrice       Int?
+  expenses       Int?
+  source         String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -54,10 +57,12 @@ model Lead {
   name      String
   phone     String
   details   String   // JSON string details (e.g. VIN, trade-in car specs, booking car ID)
-  status    String   @default("NEW") // NEW, IN_PROGRESS, COMPLETED, REJECTED
-  comments  String   @default("[]") // JSON comments array
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status          String    @default("NEW") // NEW, IN_PROGRESS, COMPLETED, REJECTED
+  comments        String    @default("[]") // JSON comments array
+  source          String?
+  nextContactDate DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Review {

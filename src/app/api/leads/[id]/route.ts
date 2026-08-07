@@ -9,7 +9,7 @@ export async function PUT(request: Request, { params }: Props) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, comment, name, phone, details } = body;
+    const { status, comment, name, phone, details, nextContactDate, source } = body;
 
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) {
@@ -28,6 +28,12 @@ export async function PUT(request: Request, { params }: Props) {
     }
     if (details !== undefined) {
       data.details = details;
+    }
+    if (nextContactDate !== undefined) {
+      data.nextContactDate = nextContactDate ? new Date(nextContactDate) : null;
+    }
+    if (source !== undefined) {
+      data.source = source;
     }
 
     if (comment !== undefined) {
