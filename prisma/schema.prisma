@@ -118,3 +118,13 @@ model RecurringExpense {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
 }
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String   // References User.id
+  action     String   // e.g. "CREATE_CAR", "UPDATE_LEAD_STATUS"
+  entityId   String?  // ID of the car, lead, etc.
+  entityType String   // e.g. "CAR", "LEAD", "EXPENSE"
+  details    String   // JSON string with extra details (e.g. old status, new status)
+  createdAt  DateTime @default(now())
+}

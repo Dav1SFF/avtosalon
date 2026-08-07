@@ -94,6 +94,11 @@ export async function GET(request: Request) {
 // Admin POST method to create a car
 export async function POST(request: Request) {
   try {
+    const { auth } = require("@/app/api/auth/[...nextauth]/route");
+    const { logActivity } = require("@/lib/logger");
+    const session = await auth();
+    const userId = session?.user?.id;
+
     const body = await request.json();
     const {
       make,
@@ -144,6 +149,16 @@ export async function POST(request: Request) {
         expenseLog: typeof expenseLog === "string" ? expenseLog : JSON.stringify(expenseLog || []),
       },
     });
+
+    if (userId) {
+      await logActivity({
+        userId,
+        action: "CREATE_CAR",
+        entityId: car.id,
+        entityType: "CAR",
+        details: { carName: `${car.make} ${car.model}`, price: car.price }
+      });
+    }
 
     return NextResponse.json({ success: true, car });
   } catch (error: any) {

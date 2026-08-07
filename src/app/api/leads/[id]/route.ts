@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/logger";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -7,6 +9,9 @@ interface Props {
 
 export async function PUT(request: Request, { params }: Props) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    
     const { id } = await params;
     const body = await request.json();
     const { status, comment, name, phone, details, nextContactDate, source } = body;
@@ -19,6 +24,15 @@ export async function PUT(request: Request, { params }: Props) {
     const data: any = {};
     if (status !== undefined) {
       data.status = status;
+      if (userId && status !== lead.status) {
+        await logActivity({
+          userId,
+          action: "UPDATE_LEAD_STATUS",
+          entityId: id,
+          entityType: "LEAD",
+          details: { oldStatus: lead.status, newStatus: status, leadName: lead.name }
+        });
+      }
     }
     if (name !== undefined) {
       data.name = name;
@@ -40,9 +54,20 @@ export async function PUT(request: Request, { params }: Props) {
       const existingComments = JSON.parse(lead.comments || "[]");
       const newCommentObj = {
         text: comment,
+        author: session?.user?.name || "Менеджер",
         createdAt: new Date().toISOString(),
       };
       data.comments = JSON.stringify([...existingComments, newCommentObj]);
+      
+      if (userId) {
+        await logActivity({
+          userId,
+          action: "ADD_LEAD_COMMENT",
+          entityId: id,
+          entityType: "LEAD",
+          details: { comment: comment, leadName: lead.name }
+        });
+      }
     }
 
     const updatedLead = await prisma.lead.update({
@@ -59,8 +84,24 @@ export async function PUT(request: Request, { params }: Props) {
 
 export async function DELETE(request: Request, { params }: Props) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    
     const { id } = await params;
+    const lead = await prisma.lead.findUnique({ where: { id } });
+    
     await prisma.lead.delete({ where: { id } });
+    
+    if (userId && lead) {
+      await logActivity({
+        userId,
+        action: "DELETE_LEAD",
+        entityId: id,
+        entityType: "LEAD",
+        details: { leadName: lead.name, leadPhone: lead.phone }
+      });
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("DELETE Lead CRM Error:", error);

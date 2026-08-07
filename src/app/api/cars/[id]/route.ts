@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/logger";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,6 +25,9 @@ export async function GET(request: Request, { params }: Props) {
 
 export async function PUT(request: Request, { params }: Props) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    
     const { id } = await params;
     const body = await request.json();
 
@@ -83,6 +88,17 @@ export async function PUT(request: Request, { params }: Props) {
       where: { id },
       data: updateData,
     });
+    
+    if (userId) {
+      const action = body.status === "SOLD" && car.status !== "SOLD" ? "SELL_CAR" : "UPDATE_CAR";
+      await logActivity({
+        userId,
+        action,
+        entityId: id,
+        entityType: "CAR",
+        details: { carName: `${car.make} ${car.model}`, oldPrice: car.price, newPrice: updateData.price }
+      });
+    }
 
     return NextResponse.json({ success: true, car: updatedCar });
   } catch (error: any) {
@@ -93,6 +109,9 @@ export async function PUT(request: Request, { params }: Props) {
 
 export async function DELETE(request: Request, { params }: Props) {
   try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    
     const { id } = await params;
     
     const car = await prisma.car.findUnique({ where: { id } });
@@ -101,6 +120,17 @@ export async function DELETE(request: Request, { params }: Props) {
     }
 
     await prisma.car.delete({ where: { id } });
+    
+    if (userId) {
+      await logActivity({
+        userId,
+        action: "DELETE_CAR",
+        entityId: id,
+        entityType: "CAR",
+        details: { carName: `${car.make} ${car.model}` }
+      });
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("DELETE Car Error:", error);
