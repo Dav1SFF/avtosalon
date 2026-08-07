@@ -268,77 +268,83 @@ export default function AdminLeadsPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-black/40 border border-white/5 rounded-2xl overflow-hidden overflow-x-auto relative min-h-[500px]">
-        <table className="w-full text-left text-sm text-white whitespace-nowrap">
-          <thead className="bg-white/5 text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
+      <div className="flex-1 bg-transparent overflow-hidden overflow-x-auto relative min-h-[500px] pb-10">
+        <table className="w-full text-left text-sm text-white whitespace-nowrap border-separate border-spacing-y-3">
+          <thead className="bg-transparent text-text-gray font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10">
             <tr>
-              <th className="p-4">Статус</th>
-              <th className="p-4">Тип</th>
-              <th className="p-4">Клієнт / Телефон</th>
-              <th className="p-4 w-full">Деталі</th>
-              <th className="p-4">Дата / Нагадування</th>
-              <th className="p-4 text-right">Дії</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50">Статус</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50">Тип</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50">Клієнт / Телефон</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50 w-full">Деталі</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50">Дата / Нагадування</th>
+              <th className="px-4 py-2 font-extrabold tracking-widest opacity-50 text-right">Дії</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody>
             {filteredLeads.map(lead => {
               const details = JSON.parse(lead.details || "{}");
               const comments = JSON.parse(lead.comments || "[]");
               const col = COLUMNS.find(c => c.id === lead.status);
               
               return (
-                <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="p-4">
-                    <select
-                      value={lead.status}
-                      onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                      className={`text-[10px] font-bold uppercase tracking-wider bg-black/50 border border-white/10 rounded px-2 py-1 cursor-pointer appearance-none ${col?.headerText}`}
-                    >
-                      {COLUMNS.map(c => (
-                        <option key={c.id} value={c.id}>{c.title}</option>
-                      ))}
-                    </select>
+                <tr key={lead.id} className="group transition-all hover:-translate-y-0.5 hover:shadow-xl">
+                  <td className="p-4 bg-white/5 border-y border-l border-white/10 rounded-l-2xl group-hover:bg-white/10 transition-colors backdrop-blur-md">
+                    <div className="relative inline-block border border-white/10 rounded-xl overflow-hidden shadow-sm">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                        className={`appearance-none bg-black/60 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest cursor-pointer outline-none transition-colors hover:bg-black/80 ${col?.headerText}`}
+                      >
+                        {COLUMNS.map(c => (
+                          <option key={c.id} value={c.id} className="bg-[#1a1a1a]">{c.title}</option>
+                        ))}
+                      </select>
+                    </div>
                   </td>
-                  <td className="p-4">
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white uppercase tracking-wider">
+                  <td className="p-4 bg-white/5 border-y border-white/10 group-hover:bg-white/10 transition-colors backdrop-blur-md">
+                    <span className="text-[10px] font-extrabold px-3 py-1.5 rounded-lg bg-white/10 text-white uppercase tracking-widest shadow-sm border border-white/5">
                       {typeLabels[lead.type] || lead.type}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="font-bold">{lead.name}</div>
-                    <div className="text-brand text-xs font-mono mt-0.5">{lead.phone}</div>
+                  <td className="p-4 bg-white/5 border-y border-white/10 group-hover:bg-white/10 transition-colors backdrop-blur-md">
+                    <div className="font-extrabold text-base mb-1 tracking-wide">{lead.name}</div>
+                    <div className="text-brand text-xs font-mono bg-brand/10 inline-block px-2 py-0.5 rounded font-bold">{lead.phone}</div>
                   </td>
-                  <td className="p-4 text-text-gray text-xs truncate max-w-xs xl:max-w-md">
+                  <td className="p-4 bg-white/5 border-y border-white/10 group-hover:bg-white/10 transition-colors backdrop-blur-md text-white/80 text-sm truncate max-w-xs xl:max-w-md font-medium">
                     {(lead.type === "TRADE_IN" || lead.type === "BUYBACK") && details.make ? (
-                      <span>{details.make} {details.model} ({details.year})</span>
+                      <span>{details.make} {details.model} <span className="opacity-50">({details.year})</span></span>
                     ) : lead.type === "BOOKING" && details.carName ? (
                       <span>{details.carName}</span>
                     ) : (
-                      <span className="italic opacity-50">Немає деталей</span>
+                      <span className="italic opacity-30 text-xs">Немає деталей</span>
                     )}
                   </td>
-                  <td className="p-4 text-xs">
-                    <div className="text-text-gray/50 mb-1">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</div>
-                    {lead.nextContactDate && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-yellow-400 font-semibold bg-yellow-400/10 px-1.5 py-0.5 rounded inline-flex">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(lead.nextContactDate).toLocaleString("uk-UA")}
+                  <td className="p-4 bg-white/5 border-y border-white/10 group-hover:bg-white/10 transition-colors backdrop-blur-md">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-[10px] text-text-gray font-bold uppercase tracking-widest">
+                        Створено: <span className="text-white/70">{new Date(lead.createdAt).toLocaleDateString("uk-UA")}</span>
                       </div>
-                    )}
+                      {lead.nextContactDate && (
+                        <div className="flex items-center gap-1.5 text-xs text-yellow-400 font-extrabold bg-yellow-400/10 px-2.5 py-1 rounded-lg w-max border border-yellow-400/20 shadow-sm">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(lead.nextContactDate).toLocaleString("uk-UA", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      )}
+                    </div>
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-3 opacity-50 group-hover:opacity-100 transition">
+                  <td className="p-4 bg-white/5 border-y border-r border-white/10 rounded-r-2xl group-hover:bg-white/10 transition-colors backdrop-blur-md text-right">
+                    <div className="flex items-center justify-end gap-4 opacity-70 group-hover:opacity-100 transition">
                       {lead.assignedUsers && lead.assignedUsers.length > 0 && (
                         <div className="flex -space-x-2 mr-2">
                           {lead.assignedUsers.map((u) => (
-                            <div key={u.id} className="w-6 h-6 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-bold border border-black z-10 overflow-hidden" title={u.name}>
+                            <div key={u.id} className="w-7 h-7 rounded-full bg-brand text-black flex items-center justify-center text-[10px] font-extrabold border-2 border-[#1a1a1a] z-10 overflow-hidden shadow-md" title={u.name}>
                               {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : u.name[0].toUpperCase()}
                             </div>
                           ))}
                         </div>
                       )}
-                      <a href={`/admin/leads/${lead.id}`} className="text-brand hover:underline font-bold text-xs uppercase transition">
-                        Відкрити заявку
+                      <a href={`/admin/leads/${lead.id}`} className="bg-white/10 hover:bg-brand hover:text-black border border-white/10 hover:border-brand text-white font-bold text-xs uppercase tracking-wider transition-all px-4 py-2 rounded-xl">
+                        Відкрити
                       </a>
                     </div>
                   </td>
