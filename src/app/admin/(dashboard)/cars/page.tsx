@@ -114,7 +114,7 @@ export default function AdminCarsPage() {
       }
 
       if (newUrls.length > 0) {
-        setImageUrls(prev => prev ? `${prev}, ${newUrls.join(", ")}` : newUrls.join(", "));
+        setImageUrls(prev => prev ? `${prev}\n${newUrls.join("\n")}` : newUrls.join("\n"));
       }
       
       if (newUrls.length < files.length) {
@@ -221,7 +221,7 @@ export default function AdminCarsPage() {
     try {
       if (typeof car.images === 'string' && car.images.trim().startsWith('[')) {
         const parsedImages = JSON.parse(car.images);
-        setImageUrls(Array.isArray(parsedImages) ? parsedImages.join(", ") : car.images);
+        setImageUrls(Array.isArray(parsedImages) ? parsedImages.join("\n") : car.images);
       } else {
         setImageUrls(car.images || "");
       }
@@ -321,7 +321,7 @@ export default function AdminCarsPage() {
     setSubmitting(true);
 
     const parsedImages = imageUrls
-      .split(",")
+      .split("\n")
       .map((url) => url.trim())
       .filter((url) => url.length > 0);
 
@@ -672,7 +672,7 @@ export default function AdminCarsPage() {
                       <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingImages} />
                     </label>
                   </div>
-                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" placeholder="https://..., https://..." />
+                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" placeholder="https://...\nhttps://..." />
                 </div>
 
                 {/* Specs JSON Details */}
