@@ -52,7 +52,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   ];
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/admin/login" });
+    signOut({ callbackUrl: `${window.location.origin}/admin/login` });
   };
 
   return (
