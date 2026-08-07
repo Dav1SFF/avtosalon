@@ -36,10 +36,16 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     return null;
   }
 
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
+
   const navLinks = [
     { name: "Огляд (Dashboard)", href: "/admin", icon: LayoutDashboard },
     { name: "Автомобілі (CRUD)", href: "/admin/cars", icon: Car },
     { name: "Заявки (CRM)", href: "/admin/leads", icon: PhoneCall },
+    ...(isAdmin ? [
+      { name: "Загальні витрати", href: "/admin/expenses", icon: Settings },
+      { name: "Команда (KPI)", href: "/admin/team", icon: User }
+    ] : [])
   ];
 
   const handleSignOut = () => {

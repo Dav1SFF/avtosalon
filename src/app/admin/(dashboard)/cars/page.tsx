@@ -58,6 +58,12 @@ export default function AdminCarsPage() {
   const [imageUrls, setImageUrls] = useState("");
   const [status, setStatus] = useState("IN_STOCK");
 
+  // Sale Fields
+  const [soldById, setSoldById] = useState("");
+  const [salePrice, setSalePrice] = useState("");
+  const [soldAt, setSoldAt] = useState(new Date().toISOString().split('T')[0]);
+  const [managers, setManagers] = useState<{id: string, name: string}[]>([]);
+
   // Specs Sub-fields
   const [engineVol, setEngineVol] = useState("");
   const [power, setPower] = useState("");
@@ -199,9 +205,18 @@ export default function AdminCarsPage() {
     }
   };
 
+  const fetchManagers = async () => {
+    try {
+      const res = await fetch("/api/admin/team");
+      const data = await res.json();
+      if (Array.isArray(data)) setManagers(data);
+    } catch (e) { }
+  };
+
   useEffect(() => {
     fetchCars();
-  }, []);
+    if (isAdmin) fetchManagers();
+  }, [isAdmin]);
 
   const handleEditClick = (car: Car) => {
     setEditingCarId(car.id);
@@ -217,6 +232,11 @@ export default function AdminCarsPage() {
     setColor(car.color);
     setDescription(car.description);
     setStatus(car.status);
+    
+    // Sale Fields
+    setSoldById((car as any).soldById || "");
+    setSalePrice((car as any).salePrice ? (car as any).salePrice.toString() : "");
+    setSoldAt((car as any).soldAt ? new Date((car as any).soldAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
     
     // Parse JSON images
     try {
@@ -303,6 +323,9 @@ export default function AdminCarsPage() {
     setDescription("");
     setImageUrls("https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800");
     setStatus("IN_STOCK");
+    setSoldById("");
+    setSalePrice("");
+    setSoldAt(new Date().toISOString().split('T')[0]);
     
     setEngineVol("1998 см³");
     setPower("258 к.с.");
@@ -364,6 +387,11 @@ export default function AdminCarsPage() {
       payload.buyPrice = buyPrice;
       payload.expenses = totalExpenses.toString();
       payload.expenseLog = expenseLog;
+      if (status === "SOLD") {
+        payload.soldById = soldById;
+        payload.salePrice = salePrice;
+        payload.soldAt = soldAt;
+      }
     }
 
     try {
@@ -676,21 +704,44 @@ export default function AdminCarsPage() {
                         <input type="text" placeholder="Витрата: 7.2 л/100км" value={consumption} onChange={(e) => setConsumption(e.target.value)} className="premium-input text-[11px]" />
                       </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] text-text-gray uppercase tracking-wider font-semibold mb-1.5 block">Комплектація (через кому)</label>
-                      <input type="text" value={eqText} onChange={(e) => setEqText(e.target.value)} className="w-full premium-input text-xs" />
+                    {/* Description */}
+                    <div className="flex flex-col gap-1.5 mt-4">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
+                        <button type="button" onClick={handleGenerateAI} disabled={isGeneratingAI} className="px-3 py-1 bg-brand/10 text-brand rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 hover:bg-brand hover:text-background transition disabled:opacity-50">
+                          <Sparkles className="w-3 h-3" /> {isGeneratingAI ? "Генерую..." : "AI Генерація"}
+                        </button>
+                      </div>
+                      <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-y text-sm" placeholder="Введіть опис або натисніть Згенерувати AI..." />
                     </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
-                      <button type="button" onClick={handleGenerateAI} disabled={isGeneratingAI} className="px-3 py-1 bg-brand/10 text-brand rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 hover:bg-brand hover:text-background transition disabled:opacity-50">
-                        <Sparkles className="w-3 h-3" /> {isGeneratingAI ? "Генерую..." : "AI Генерація"}
-                      </button>
+                    
+                    {/* Status */}
+                    <div className="flex flex-col gap-1.5 mt-4 p-4 bg-brand/5 border border-brand/20 rounded-xl">
+                      <label className="text-xs text-brand uppercase tracking-wider font-bold">Статус авто</label>
+                      <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full premium-input appearance-none text-white font-bold bg-black/40">
+                        <option value="IN_STOCK">В наявності (У продажу)</option>
+                        <option value="BOOKED">Заброньовано</option>
+                        <option value="SOLD">ПРОДАНО</option>
+                      </select>
+                      
+                      {status === "SOLD" && isAdmin && (
+                        <div className="grid grid-cols-2 gap-4 mt-4 p-4 bg-black/20 rounded-xl border border-white/5 animate-fadeIn">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-text-gray uppercase tracking-wider font-semibold">Хто продав (Менеджер)</label>
+                            <select value={soldById} onChange={(e) => setSoldById(e.target.value)} className="premium-input text-xs">
+                              <option value="">Не вибрано</option>
+                              {managers.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] text-brand uppercase tracking-wider font-bold">Реальна ціна продажу, $</label>
+                            <input type="number" required={status === "SOLD"} value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className="premium-input text-xs text-white font-bold text-center" />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none text-sm" placeholder="Введіть опис або натисніть Згенерувати AI..." />
                   </div>
 
                 </div>

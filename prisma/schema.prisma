@@ -15,9 +15,11 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("MANAGER") // ADMIN, MANAGER, CONTENT_MANAGER
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role           String   @default("MANAGER") // ADMIN, MANAGER, CONTENT_MANAGER
+  salary         Int      @default(0) // Fixed salary
+  commissionRate Float    @default(0) // Percentage of profit
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Car {
@@ -47,6 +49,9 @@ model Car {
   buyPrice       Int?
   expenses       Int?
   expenseLog     String   @default("[]") // JSON array of detailed expenses
+  soldById       String?  // References User.id
+  salePrice      Int?
+  soldAt         DateTime?
   source         String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -91,5 +96,14 @@ model Banner {
   subtitle  String?
   image     String
   link      String?
+  createdAt DateTime @default(now())
+}
+
+model GlobalExpense {
+  id        String   @id @default(uuid())
+  category  String   // e.g. "Реклама", "Офіс", "Зарплата", "Інше"
+  amount    Int
+  date      DateTime
+  note      String
   createdAt DateTime @default(now())
 }

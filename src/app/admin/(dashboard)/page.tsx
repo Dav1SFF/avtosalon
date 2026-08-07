@@ -12,7 +12,7 @@ export default async function AdminDashboardPage() {
   const isAdmin = (session?.user as any)?.role === "ADMIN";
 
   // Query database statistics
-  const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount, soldCars] = await Promise.all([
+  const [totalCars, activeLeads, totalReviews, tradeInCount, buybackCount, bookingCount, contactCount, soldCars, inStockCars, globalExpenses] = await Promise.all([
     prisma.car.count(),
     prisma.lead.count({ where: { status: "NEW" } }),
     prisma.review.count(),
@@ -21,14 +21,27 @@ export default async function AdminDashboardPage() {
     prisma.lead.count({ where: { type: "BOOKING" } }),
     prisma.lead.count({ where: { type: "CONTACT" } }),
     prisma.car.findMany({ where: { status: "SOLD" } }),
+    prisma.car.findMany({ where: { status: "IN_STOCK" } }),
+    prisma.globalExpense.findMany(),
   ]);
 
-  const totalMargin = soldCars.reduce((acc, car) => {
+  const realizedProfit = soldCars.reduce((acc, car) => {
+    if (car.salePrice && car.buyPrice) {
+      return acc + (car.salePrice - car.buyPrice - (car.expenses || 0));
+    }
+    return acc;
+  }, 0);
+
+  const totalCapital = inStockCars.reduce((acc, car) => acc + (car.buyPrice || 0), 0);
+  const expectedProfit = inStockCars.reduce((acc, car) => {
     if (car.price && car.buyPrice) {
       return acc + (car.price - car.buyPrice - (car.expenses || 0));
     }
     return acc;
   }, 0);
+
+  const totalExpensesAmount = globalExpenses.reduce((acc, exp) => acc + exp.amount, 0);
+  const netProfit = realizedProfit - totalExpensesAmount;
 
   // Fetch recent leads
   const recentLeads = await prisma.lead.findMany({
@@ -106,19 +119,34 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Total Margin */}
+        {/* P&L Analytics (Admin Only) */}
         {isAdmin && (
-          <div className="glass p-6 rounded-[24px] border border-white/5 flex items-center justify-between">
-            <div>
-              <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block text-brand">Прибуток</span>
-              <span className="text-2xl font-extrabold text-white mt-2 block font-mono">
-                ${totalMargin.toLocaleString("en-US")}
-              </span>
+          <>
+            <div className="glass p-6 rounded-[24px] border border-white/5 flex flex-col justify-between lg:col-span-2">
+              <div>
+                <span className="text-xs text-text-gray font-semibold uppercase tracking-wider block text-brand">Капітал в авто</span>
+                <span className="text-3xl font-extrabold text-white mt-2 block font-mono">
+                  ${totalCapital.toLocaleString("en-US")}
+                </span>
+                <span className="text-[10px] text-text-gray mt-1 block">Очікуваний прибуток: +${expectedProfit.toLocaleString("en-US")}</span>
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center">
-              <DollarSign className="w-6 h-6" />
+
+            <div className="glass p-6 rounded-[24px] border border-brand/30 flex flex-col justify-between lg:col-span-2 bg-brand/5">
+              <div>
+                <span className="text-xs text-brand font-black uppercase tracking-wider block">Чистий Прибуток (P&L)</span>
+                <div className="flex items-end gap-2 mt-2">
+                  <span className={`text-4xl font-extrabold block font-mono ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    ${netProfit.toLocaleString("en-US")}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-text-gray uppercase tracking-widest border-t border-white/10 pt-2">
+                  <span>З продажу: ${realizedProfit}</span>
+                  <span className="text-red-400">Витрати: -${totalExpensesAmount}</span>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
       </div>

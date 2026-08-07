@@ -69,6 +69,15 @@ export async function PUT(request: Request, { params }: Props) {
     if (body.expenseLog !== undefined) {
       updateData.expenseLog = typeof body.expenseLog === "string" ? body.expenseLog : JSON.stringify(body.expenseLog);
     }
+    if (body.soldById !== undefined) {
+      updateData.soldById = body.soldById;
+    }
+    if (body.salePrice !== undefined) {
+      updateData.salePrice = body.salePrice !== null ? parseInt(body.salePrice) : null;
+    }
+    if (body.soldAt !== undefined) {
+      updateData.soldAt = body.soldAt ? new Date(body.soldAt) : null;
+    }
 
     const updatedCar = await prisma.car.update({
       where: { id },
