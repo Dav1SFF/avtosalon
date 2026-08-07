@@ -568,234 +568,273 @@ export default function AdminCarsPage() {
 
       {/* Creation/Editing sliding drawer modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-xs">
-          <div className="bg-[#0E2A24] border-l border-white/5 w-full max-w-2xl h-screen flex flex-col justify-between p-8 overflow-y-auto animate-slideLeft">
+        <div className="fixed inset-0 z-50 flex justify-center items-center p-4 sm:p-8 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-[#0E2A24] border border-white/5 w-full max-w-6xl rounded-3xl flex flex-col max-h-full overflow-hidden animate-slideUp shadow-2xl">
             
-            <div>
-              <div className="flex justify-between items-center pb-6 border-b border-white/5 mb-6">
-                <h3 className="text-white font-extrabold text-xl uppercase tracking-wide">
-                  {editingCarId ? "Редагувати автомобіль" : "Додати автомобіль"}
-                </h3>
-                <button onClick={() => setModalOpen(false)} className="text-text-gray hover:text-white">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+            {/* Header fixed */}
+            <div className="flex justify-between items-center p-6 border-b border-white/5 bg-black/20 shrink-0">
+              <h3 className="text-white font-black text-xl uppercase tracking-wide">
+                {editingCarId ? "Редагувати автомобіль" : "Додати автомобіль"}
+              </h3>
+              <button onClick={() => setModalOpen(false)} className="text-text-gray hover:text-white p-2 bg-white/5 rounded-lg transition">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <form onSubmit={handleFormSubmit} className="space-y-6">
-                {/* VIN Decoder */}
-                <div className="flex flex-col gap-1.5 p-4 bg-brand/5 border border-brand/20 rounded-[16px]">
-                  <label className="text-xs text-brand uppercase tracking-wider font-extrabold flex items-center gap-1">
-                    <Search className="w-3.5 h-3.5" /> Автозаповнення по VIN
-                  </label>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Введіть 17 символів VIN-коду..." value={vinInput} onChange={(e) => setVinInput(e.target.value.toUpperCase())} className="flex-grow premium-input uppercase" maxLength={17} />
-                    <button type="button" onClick={handleDecodeVIN} disabled={isDecodingVin} className="px-4 py-2 bg-brand text-background font-bold text-xs uppercase tracking-wider rounded-lg hover:bg-brand-hover transition disabled:opacity-50 whitespace-nowrap">
-                      {isDecodingVin ? "Пошук..." : "Розшифрувати"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Brand & Model */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Марка</label>
-                    <input type="text" required placeholder="BMW" value={make} onChange={(e) => setMake(e.target.value)} className="w-full premium-input" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Модель</label>
-                    <input type="text" required placeholder="M3" value={model} onChange={(e) => setModel(e.target.value)} className="w-full premium-input" />
-                  </div>
-                </div>
-
-                {/* Price, Year, Mileage */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Ціна, $</label>
-                    <input type="number" required placeholder="34000" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full premium-input text-center" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Рік</label>
-                    <input type="number" required placeholder="2022" value={year} onChange={(e) => setYear(e.target.value)} className="w-full premium-input text-center" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Пробіг, км</label>
-                    <input type="number" required placeholder="26000" value={mileage} onChange={(e) => setMileage(e.target.value)} className="w-full premium-input text-center" />
-                  </div>
-                </div>
-
-                {/* Engine, Transmission, Drive, Body, Color */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Двигун</label>
-                    <input type="text" value={engine} onChange={(e) => setEngine(e.target.value)} className="w-full premium-input" />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Колір</label>
-                    <input type="text" placeholder="Білий" value={color} onChange={(e) => setColor(e.target.value)} className="w-full premium-input" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Коробка</label>
-                    <select value={transmission} onChange={(e) => setTransmission(e.target.value)} className="w-full premium-input appearance-none">
-                      <option value="Автомат">Автомат</option>
-                      <option value="Механіка">Механіка</option>
-                      <option value="Варіатор">Варіатор</option>
-                      <option value="Робот">Робот</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Привід</label>
-                    <select value={drive} onChange={(e) => setDrive(e.target.value)} className="w-full premium-input appearance-none">
-                      <option value="Повний привід">Повний привід</option>
-                      <option value="Передній привід">Передній привід</option>
-                      <option value="Задній привід">Задній привід</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Кузов</label>
-                    <select value={body} onChange={(e) => setBody(e.target.value)} className="w-full premium-input appearance-none">
-                      <option value="Седан">Седан</option>
-                      <option value="Кросовер">Кросовер</option>
-                      <option value="Купе">Купе</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Images */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Зображення (URL-адреси або Завантаження)</label>
-                    <label className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition ${uploadingImages ? 'text-text-gray cursor-wait' : 'text-brand hover:underline'}`}>
-                      {uploadingImages ? "Завантаження..." : "+ Вибрати файли"}
-                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingImages} />
+            {/* Scrollable Form Body */}
+            <div className="overflow-y-auto p-6 custom-scrollbar">
+              <form id="carForm" onSubmit={handleFormSubmit} className="flex flex-col lg:flex-row gap-8">
+                
+                {/* LEFT COLUMN - Basic Info */}
+                <div className="flex-1 space-y-6">
+                  {/* VIN Decoder */}
+                  <div className="flex flex-col gap-2 p-4 bg-brand/10 border border-brand/20 rounded-2xl">
+                    <label className="text-[10px] text-brand uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                      <Search className="w-3.5 h-3.5" /> Автозаповнення по VIN
                     </label>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Введіть 17 символів VIN-коду..." value={vinInput} onChange={(e) => setVinInput(e.target.value.toUpperCase())} className="flex-grow premium-input uppercase bg-black/20" maxLength={17} />
+                      <button type="button" onClick={handleDecodeVIN} disabled={isDecodingVin} className="px-5 py-2.5 bg-brand text-background font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-brand-hover transition disabled:opacity-50 whitespace-nowrap">
+                        {isDecodingVin ? "Пошук..." : "Розшифрувати"}
+                      </button>
+                    </div>
                   </div>
-                  <textarea rows={3} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input resize-none" placeholder="https://...\nhttps://..." />
-                </div>
 
-                {/* Specs JSON Details */}
-                <div className="border-t border-white/5 pt-4">
-                  <span className="block text-white font-bold text-xs uppercase tracking-wider mb-3">Специфікації (Характеристики)</span>
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="text" placeholder="Об'єм: 1998 см³" value={engineVol} onChange={(e) => setEngineVol(e.target.value)} className="premium-input text-xs" />
-                    <input type="text" placeholder="Потужність: 258 к.с." value={power} onChange={(e) => setPower(e.target.value)} className="premium-input text-xs" />
-                    <input type="text" placeholder="Розгін: 5.8 с" value={acceleration} onChange={(e) => setAcceleration(e.target.value)} className="premium-input text-xs" />
-                    <input type="text" placeholder="Витрата: 7.2 л/100км" value={consumption} onChange={(e) => setConsumption(e.target.value)} className="premium-input text-xs" />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Марка</label>
+                      <input type="text" required placeholder="BMW" value={make} onChange={(e) => setMake(e.target.value)} className="w-full premium-input" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Модель</label>
+                      <input type="text" required placeholder="M3" value={model} onChange={(e) => setModel(e.target.value)} className="w-full premium-input" />
+                    </div>
                   </div>
-                </div>
 
-                {/* Equipment (comma separated) */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Комплектація (через кому)</label>
-                  <input type="text" value={eqText} onChange={(e) => setEqText(e.target.value)} className="w-full premium-input" />
-                </div>
-
-                {/* Service History */}
-                <div className="border-t border-white/5 pt-4 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="block text-white font-bold text-xs uppercase tracking-wider">Історія обслуговування</span>
-                    <button
-                      type="button"
-                      onClick={() => setServiceHistory([...serviceHistory, { date: "", mileage: 0, type: "", note: "" }])}
-                      className="text-brand text-xs font-bold hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" /> Додати запис
-                    </button>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-brand uppercase tracking-wider font-bold">Ціна, $</label>
+                      <input type="number" required placeholder="34000" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full premium-input text-center text-white font-bold" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Рік</label>
+                      <input type="number" required placeholder="2022" value={year} onChange={(e) => setYear(e.target.value)} className="w-full premium-input text-center" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Пробіг, км</label>
+                      <input type="number" required placeholder="26000" value={mileage} onChange={(e) => setMileage(e.target.value)} className="w-full premium-input text-center" />
+                    </div>
                   </div>
-                  {serviceHistory.map((sh, idx) => (
-                    <div key={idx} className="p-4 bg-white/5 rounded-xl border border-white/10 relative space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setServiceHistory(serviceHistory.filter((_, i) => i !== idx))}
-                        className="absolute top-2 right-2 text-red-400 hover:text-red-300"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Двигун</label>
+                      <input type="text" value={engine} onChange={(e) => setEngine(e.target.value)} className="w-full premium-input" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Колір</label>
+                      <input type="text" placeholder="Білий" value={color} onChange={(e) => setColor(e.target.value)} className="w-full premium-input" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Коробка</label>
+                      <select value={transmission} onChange={(e) => setTransmission(e.target.value)} className="w-full premium-input appearance-none">
+                        <option value="Автомат">Автомат</option>
+                        <option value="Механіка">Механіка</option>
+                        <option value="Варіатор">Варіатор</option>
+                        <option value="Робот">Робот</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Привід</label>
+                      <select value={drive} onChange={(e) => setDrive(e.target.value)} className="w-full premium-input appearance-none">
+                        <option value="Повний привід">Повний привід</option>
+                        <option value="Передній привід">Передній привід</option>
+                        <option value="Задній привід">Задній привід</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Кузов</label>
+                      <select value={body} onChange={(e) => setBody(e.target.value)} className="w-full premium-input appearance-none">
+                        <option value="Седан">Седан</option>
+                        <option value="Кросовер">Кросовер</option>
+                        <option value="Купе">Купе</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Specs & Equipment */}
+                  <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-5">
+                    <div>
+                      <span className="block text-white font-bold text-xs uppercase tracking-wider mb-3">Специфікації</span>
                       <div className="grid grid-cols-2 gap-3">
-                        <input type="text" placeholder="Дата (напр. 15.08.2024)" value={sh.date} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].date = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
-                        <input type="number" placeholder="Пробіг (напр. 120000)" value={sh.mileage || ""} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].mileage = parseInt(e.target.value) || 0; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
-                        <input type="text" placeholder="Тип робіт (ТО, Ремонт)" value={sh.type} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].type = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
-                        <input type="text" placeholder="Опис робіт (заміна масла...)" value={sh.note} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].note = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-xs" required />
+                        <input type="text" placeholder="Об'єм: 1998 см³" value={engineVol} onChange={(e) => setEngineVol(e.target.value)} className="premium-input text-[11px]" />
+                        <input type="text" placeholder="Потужність: 258 к.с." value={power} onChange={(e) => setPower(e.target.value)} className="premium-input text-[11px]" />
+                        <input type="text" placeholder="Розгін: 5.8 с" value={acceleration} onChange={(e) => setAcceleration(e.target.value)} className="premium-input text-[11px]" />
+                        <input type="text" placeholder="Витрата: 7.2 л/100км" value={consumption} onChange={(e) => setConsumption(e.target.value)} className="premium-input text-[11px]" />
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Admin Financials (Expense Log & Buy Price) */}
-                {isAdmin && (
-                  <div className="border-t border-white/5 pt-4 space-y-4">
-                    <div className="flex justify-between items-center bg-brand/5 p-4 rounded-xl border border-brand/20">
-                      <div>
-                        <span className="block text-brand font-bold text-xs uppercase tracking-wider flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" /> Фінанси (тільки для Власника)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-text-gray font-semibold">Ціна викупу, $:</label>
-                        <input type="number" placeholder="25000" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} className="premium-input text-xs w-24 text-center" />
-                      </div>
+                    <div>
+                      <label className="text-[10px] text-text-gray uppercase tracking-wider font-semibold mb-1.5 block">Комплектація (через кому)</label>
+                      <input type="text" value={eqText} onChange={(e) => setEqText(e.target.value)} className="w-full premium-input text-xs" />
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-center px-2">
-                      <span className="block text-white font-bold text-xs uppercase tracking-wider">Журнал витрат</span>
-                      <button
-                        type="button"
-                        onClick={() => setExpenseLog([...expenseLog, { date: "", type: "", amount: 0, note: "" }])}
-                        className="text-green-400 text-xs font-bold hover:underline flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3" /> Додати витрату
+                  {/* Description */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
+                      <button type="button" onClick={handleGenerateAI} disabled={isGeneratingAI} className="px-3 py-1 bg-brand/10 text-brand rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 hover:bg-brand hover:text-background transition disabled:opacity-50">
+                        <Sparkles className="w-3 h-3" /> {isGeneratingAI ? "Генерую..." : "AI Генерація"}
                       </button>
                     </div>
+                    <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none text-sm" placeholder="Введіть опис або натисніть Згенерувати AI..." />
+                  </div>
 
-                    {expenseLog.map((exp, idx) => (
-                      <div key={idx} className="p-4 bg-green-500/5 rounded-xl border border-green-500/10 relative space-y-3">
-                        <button
-                          type="button"
-                          onClick={() => setExpenseLog(expenseLog.filter((_, i) => i !== idx))}
-                          className="absolute top-2 right-2 text-red-400 hover:text-red-300"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                        <div className="grid grid-cols-4 gap-3">
-                          <input type="text" placeholder="Дата (напр. 15.08)" value={exp.date} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].date = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
-                          <input type="text" placeholder="Тип (Ремонт, ТО)" value={exp.type} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].type = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
-                          <input type="number" placeholder="Сума $" value={exp.amount || ""} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].amount = parseInt(e.target.value) || 0; setExpenseLog(newLog); }} className="premium-input text-xs font-bold text-green-400" required />
-                          <input type="text" placeholder="Коментар" value={exp.note} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].note = e.target.value; setExpenseLog(newLog); }} className="premium-input text-xs" required />
+                </div>
+
+                {/* RIGHT COLUMN - Media, History, Financials */}
+                <div className="w-full lg:w-[400px] xl:w-[480px] shrink-0 space-y-6">
+                  
+                  {/* Images block */}
+                  <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-white uppercase tracking-wider font-bold">Фотографії</label>
+                      <label className={`px-3 py-1.5 rounded-lg bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition hover:bg-white/20 ${uploadingImages ? 'opacity-50 cursor-wait' : ''}`}>
+                        {uploadingImages ? "Завантаження..." : "+ Завантажити"}
+                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploadingImages} />
+                      </label>
+                    </div>
+                    
+                    {/* Image Thumbnails */}
+                    {(() => {
+                      const parsedUrls = imageUrls.split('\n').map(u => u.trim()).filter(u => u.length > 0);
+                      return parsedUrls.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {parsedUrls.map((url, i) => (
+                            <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-black/40 group border border-white/10">
+                              <Image src={url} alt={`img-${i}`} fill className="object-cover" />
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const newUrls = [...parsedUrls];
+                                  newUrls.splice(i, 1);
+                                  setImageUrls(newUrls.join("\n"));
+                                }}
+                                className="absolute top-1 right-1 bg-black/60 text-white p-1 rounded hover:bg-red-500 opacity-0 group-hover:opacity-100 transition backdrop-blur-md"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center text-text-gray/50 text-xs border-2 border-dashed border-white/10 rounded-xl">
+                          Немає фотографій. Натисніть кнопку вище або вставте посилання нижче.
+                        </div>
+                      );
+                    })()}
+
+                    <div className="mt-2">
+                      <label className="text-[9px] text-text-gray uppercase font-semibold mb-1 block">Ручне введення URL (з нового рядка)</label>
+                      <textarea rows={2} value={imageUrls} onChange={(e) => setImageUrls(e.target.value)} className="w-full premium-input text-[10px] resize-none opacity-50 focus:opacity-100" placeholder="https://..." />
+                    </div>
+                  </div>
+
+                  {/* Service History */}
+                  <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="block text-white font-bold text-xs uppercase tracking-wider">Сервісна Історія</span>
+                      <button
+                        type="button"
+                        onClick={() => setServiceHistory([...serviceHistory, { date: "", mileage: 0, type: "", note: "" }])}
+                        className="text-brand text-[10px] font-bold hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> Додати
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {serviceHistory.map((sh, idx) => (
+                        <div key={idx} className="p-3 bg-black/20 rounded-xl border border-white/5 relative">
+                          <button type="button" onClick={() => setServiceHistory(serviceHistory.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:scale-110 transition z-10">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input type="text" placeholder="Дата" value={sh.date} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].date = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-[10px] py-1.5" required />
+                            <input type="number" placeholder="Пробіг" value={sh.mileage || ""} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].mileage = parseInt(e.target.value) || 0; setServiceHistory(newHistory); }} className="premium-input text-[10px] py-1.5" required />
+                            <input type="text" placeholder="Тип робіт" value={sh.type} onChange={(e) => { const newHistory = [...serviceHistory]; newHistory[idx].type = e.target.value; setServiceHistory(newHistory); }} className="premium-input text-[10px] py-1.5 col-span-2" required />
+                          </div>
+                        </div>
+                      ))}
+                      {serviceHistory.length === 0 && <p className="text-xs text-text-gray/50 text-center py-2">Немає записів</p>}
+                    </div>
+                  </div>
+
+                  {/* Admin Financials */}
+                  {isAdmin && (
+                    <div className="p-5 bg-green-500/5 rounded-2xl border border-green-500/20 space-y-4">
+                      <div className="flex justify-between items-center pb-3 border-b border-green-500/20">
+                        <span className="block text-brand font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                          <DollarSign className="w-4 h-4" /> Фінанси (Власник)
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[10px] text-text-gray font-semibold">Викуп, $:</label>
+                          <input type="number" placeholder="25000" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} className="premium-input text-xs w-20 text-center font-bold text-white bg-black/40" />
                         </div>
                       </div>
-                    ))}
-                    
-                    {expenseLog.length > 0 && (
-                      <div className="flex justify-end pr-2">
-                        <span className="text-xs text-text-gray font-semibold">Разом витрат: <span className="text-brand text-sm">${expenseLog.reduce((sum, item) => sum + (item.amount || 0), 0)}</span></span>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="block text-white font-bold text-[10px] uppercase tracking-wider">Журнал витрат</span>
+                          <button
+                            type="button"
+                            onClick={() => setExpenseLog([...expenseLog, { date: "", type: "", amount: 0, note: "" }])}
+                            className="text-green-400 text-[10px] font-bold hover:underline flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Додати
+                          </button>
+                        </div>
+                        <div className="space-y-3">
+                          {expenseLog.map((exp, idx) => (
+                            <div key={idx} className="p-3 bg-black/20 rounded-xl border border-green-500/10 relative">
+                              <button type="button" onClick={() => setExpenseLog(expenseLog.filter((_, i) => i !== idx))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:scale-110 transition z-10">
+                                <X className="w-3 h-3" />
+                              </button>
+                              <div className="grid grid-cols-3 gap-2 mb-2">
+                                <input type="text" placeholder="Дата" value={exp.date} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].date = e.target.value; setExpenseLog(newLog); }} className="premium-input text-[10px] py-1.5" required />
+                                <input type="text" placeholder="Тип" value={exp.type} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].type = e.target.value; setExpenseLog(newLog); }} className="premium-input text-[10px] py-1.5" required />
+                                <input type="number" placeholder="Сума $" value={exp.amount || ""} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].amount = parseInt(e.target.value) || 0; setExpenseLog(newLog); }} className="premium-input text-[10px] py-1.5 font-bold text-green-400" required />
+                              </div>
+                              <input type="text" placeholder="Коментар" value={exp.note} onChange={(e) => { const newLog = [...expenseLog]; newLog[idx].note = e.target.value; setExpenseLog(newLog); }} className="premium-input text-[10px] py-1.5 w-full" required />
+                            </div>
+                          ))}
+                          {expenseLog.length === 0 && <p className="text-xs text-text-gray/50 text-center py-2">Немає витрат</p>}
+                        </div>
+                        {expenseLog.length > 0 && (
+                          <div className="mt-4 text-right">
+                            <span className="text-xs text-text-gray font-semibold">Разом витрат: <span className="text-brand text-sm">${expenseLog.reduce((sum, item) => sum + (item.amount || 0), 0)}</span></span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
 
-                {/* Description */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs text-text-gray uppercase tracking-wider font-semibold">Опис автомобіля</label>
-                    <button type="button" onClick={handleGenerateAI} disabled={isGeneratingAI} className="text-brand text-xs font-bold uppercase flex items-center gap-1 hover:underline disabled:opacity-50 transition">
-                      <Sparkles className="w-3.5 h-3.5" /> {isGeneratingAI ? "Генерую..." : "Згенерувати AI"}
-                    </button>
-                  </div>
-                  <textarea rows={8} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full premium-input resize-none" placeholder="Введіть опис або натисніть Згенерувати AI..." />
-                </div>
-
-                <div className="pt-6">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-4 bg-brand hover:bg-brand-hover text-background text-sm font-bold uppercase tracking-wider rounded-xl transition"
-                  >
-                    {submitting ? "Збереження..." : "Зберегти автомобіль"}
-                  </button>
                 </div>
               </form>
+            </div>
+
+            {/* Footer fixed */}
+            <div className="p-6 border-t border-white/5 bg-black/40 shrink-0 flex justify-end">
+              <button
+                type="submit"
+                form="carForm"
+                disabled={submitting}
+                className="px-8 py-3 bg-brand hover:bg-brand-hover text-background text-sm font-black uppercase tracking-widest rounded-xl transition shadow-xl disabled:opacity-50"
+              >
+                {submitting ? "Збереження..." : "Зберегти автомобіль"}
+              </button>
             </div>
 
           </div>
