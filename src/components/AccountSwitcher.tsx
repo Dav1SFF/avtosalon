@@ -21,7 +21,8 @@ export default function AccountSwitcher({ session }: { session: any }) {
       fetch("/api/admin/team")
         .then(res => res.json())
         .then(data => {
-          if (data.team) setTeam(data.team);
+          if (Array.isArray(data)) setTeam(data);
+          else if (data.team && Array.isArray(data.team)) setTeam(data.team);
         })
         .catch(console.error);
     }
