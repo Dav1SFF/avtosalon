@@ -21,6 +21,7 @@ interface Lead {
   comments: string;
   createdAt: string;
   isPublic: boolean;
+  nextContactDate: string | null;
   assignedUsers: User[];
 }
 
@@ -336,6 +337,21 @@ export default function LeadDetailsPage() {
                 <option value="COMPLETED">✅ Виконано</option>
                 <option value="REJECTED">❌ Відхилено</option>
               </select>
+            </div>
+
+            {/* Next Contact Date */}
+            <div>
+              <div className="text-xs text-text-gray uppercase font-bold mb-2">Нагадування (Дзвінок)</div>
+              <input
+                type="datetime-local"
+                value={lead.nextContactDate ? new Date(new Date(lead.nextContactDate).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => {
+                  const val = e.target.value ? new Date(e.target.value).toISOString() : null;
+                  updateLead({ nextContactDate: val }, (prev) => ({ ...prev, nextContactDate: val }));
+                }}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-bold cursor-pointer focus:border-brand focus:outline-none disabled:opacity-50"
+                disabled={!isAdmin && !isAssignedToMe}
+              />
             </div>
 
             {/* Privacy Toggle */}
