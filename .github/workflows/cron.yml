@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call Reminders API
-        run: curl -s https://avtosalon-puoe.vercel.app/api/cron/reminders
+        run: curl -s https://avtosalon-puce.vercel.app/api/cron/reminders
